@@ -1,0 +1,47 @@
+---
+title: "Files and Environment Panes"
+author: "David Connell"
+date: "8/19/2021"
+output: pdf_document
+---
+
+Your working directory is the directory (folder) in which you are working. The idea is that for a project you will have a directory for that project, and all your data and code will be in that folder, but that is not always the case. Sometimes we need to reference files that are outside our current working directory.
+
+How do you find out what your current working directory is?
+```{r working-directory}
+getwd()
+```
+
+You can reference a file within your working directory just by using the name of the file in quotes:
+```{r read-csv}
+data <- read.csv("homeless_impact.csv")
+```
+
+You can reference *any* file within the folder structure by using what is called its "absolute path". The absolute path shows the sequence off all the folders you have to go through to get to the file in question, starting from the "root" directory on the hard drive in your computer, or in our case, the disk on the DataHub server. We can guess the absolute path for this CSV file from the getwd() we ran earlier.
+```{r abs-path}
+data2 <- read.csv("/home/jovyan/PHW251_Fall2021/weekly material/week_2/homeless_impact.csv")
+```
+
+You can change your working directory with the setwd() command, but within an Rmd file, it will only change within that chunk. Here I'm using "../" to go up one level in the directory structure from my current working directory, and then "week_1" to go into the week 1 folder. This is called a [relative path](https://www.geeksforgeeks.org/absolute-relative-pathnames-unix/).
+```{r setwd}
+setwd("../week_1")
+getwd()
+```
+
+```{r}
+getwd()
+```
+
+
+I find the working directory system doesn't always work as I expect, especially with R Markdown, so I tend to use the absolute paths to reference files. It always works.
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,297 @@
+---
+title: "Toolkit - Vectors & Lists"
+author: "Lauren Nelson"
+date: "9/14/2020"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Vectors & Lists 
+- Creating
+- Indexing/extracting
+- Modifying 
+
+
+**Vectors**
+One dimensional objects that contain a single data type: numeric, character, complex, logical
+
+- Creating vectors
+  + c() function
+  + Using : operator for a vector of consecutive numbers
+  + seq()
+  + from data frame/tibble columns
+```{r}
+#create vector using c()
+vec_num <- c(1,5,6,94,NA)
+vec_num
+
+vec_char <- c("dog","cat","mouse")
+vec_char
+
+#utilize previously learned functions to see info about vectors
+length(vec_char)
+str(vec_char)
+typeof(vec_char)
+
+#create vector using :
+vec_num1 <- 1:10
+vec_num1
+
+#create vector using seq()
+vec_seq <- seq(20,25,by=0.25)
+vec_seq
+
+vec_seq2 <- seq(20,25,length.out=10)
+vec_seq2
+
+typeof(vec_seq2)
+
+#what happens when different data types are included? 
+vec_multi <- c(1,2,3,"dog")
+vec_multi
+
+str(vec_multi)
+
+#create a vector from column in data frame 
+testing_plain <- data.frame(
+  county = c("Alameda","Contra Costa","Marin"),
+  total_tests = c(500,745,832),
+  pos_tests = c(43, 32, 30)
+)
+
+v_county <- as.character(testing_plain$county)
+v_county
+
+#insert tangent covered later in the video
+#create a vector of counties we are interested in
+county_list <- c("San Diego","Marin")
+
+#compare our vector with the list of counties to see which are in the list
+v_county %in% county_list
+
+#named vectors
+named_v <- c("day1" = "Monday", "day2" = "Tuesday", "day3" = "Wednesday" )
+named_v
+
+```
+
+- Indexing a vector
+  + integers (positive or negative)
+  + logical vectors
+  + character vectors/names
+  + which()
+```{r}
+#create vector for use below
+new_vec <- seq(0,50,by=5)
+
+#5th element
+new_vec[5]
+new_vec
+
+#elements 5-10
+new_vec[5:10]
+
+#elements 3,6,9
+new_vec[c(3,6,9)]
+
+#all elements except 3,6,9
+new_vec[c(-3,-6,-9)]
+
+#all elements except 5,6,7
+new_vec[-5:-7]
+
+#shorter vector
+short_vec <- new_vec[5:10]
+short_vec
+
+#logical vector index
+short_vec[c(FALSE,TRUE,FALSE,TRUE,FALSE,FALSE)]
+
+#by condition
+short_vec[short_vec>30]
+
+#which
+short_vec
+
+#returns position of values that match the condition
+which(short_vec>30)
+
+#returns elements that match the condition
+short_vec[which(short_vec>30)]
+
+#see names of elements
+named_v
+names(named_v)
+
+#index by name
+named_v["day1"]
+
+named_v[c("day1","day2")]
+
+
+```
+
+- Modify vectors
+  + Change element
+  + Delete 
+  + Combine vectors
+  + Calculate
+```{r}
+#create multiple vectors to use below
+v1 <- c(2,7,3,21,98)
+v2 <- 1:5
+v3 <- c("a","b","c","d","e")
+v4 <- c(1,3)
+
+#change an element
+v1[5] <- 94
+v1
+
+#add an element
+v1[6]<- NA
+v1
+
+#delete an element
+v1[-6]
+#or
+v1[1:5]
+
+#clear vector values
+#create vector to delete
+test <- v1
+
+#clear values from vector
+test <- NULL
+
+#combine vectors 
+#same type
+v1_2 <- c(v1,v2)
+v1_2
+
+#numeric and character, combine to character
+v1_3 <- c(v1,v3)
+v1_3
+
+#add vectors
+v1 <- v1[1:5]
+v1+v2
+
+#adding vectors of different lengths will work - the short vector values will be recycled to 
+#align with length of longer vector
+v1+v4
+
+#subtract 
+v1-v2
+
+#multiply
+v1*v2
+
+#logical comparison
+v1==v2
+
+#return TRUE/FALSE if value is in vector
+3 %in% v1
+
+#sort
+v1
+sort(v1,decreasing=TRUE)
+
+#sort - character values, descending
+v3
+sort(v3,decreasing=TRUE)
+sort(v3)
+
+#calculations
+v_abs<-c(-1,-4,3,7)
+abs(v_abs)
+
+```
+
+
+**Lists**
+Ordered collection of objects
+
+Creating list and named lists
+```{r}
+#create basic list
+list1 <- list("dog",375)
+list1
+
+#create named list
+named_list <- list(pet="dog",number=375)
+
+#create lists with diverse set of objects - character vector, matrix, and a list 
+big_list <- list(testing_plain,named_v,list1)
+
+multi_list<- list(c("Sat","Sun"), matrix(c(3,9,6,12,-3,21), nrow = 2), list("dog",375))
+
+#give names to the elements in the list
+multi_list<- list("Weekend" = c("Sat","Sun"), "Mults of 3" = matrix(c(3,9,6,12,-3,21), nrow = 2),"Another list"=list("dog",375))
+
+#another option
+names(multi_list) <- c("Weekend","Mults of 3","Another list")
+
+```
+
+Indexing lists
+- [ ] or $
+```{r}
+#index list
+named_list$pet
+
+#compare single brackets
+named_list[2]
+
+#to double brackets
+named_list[[2]]
+
+#can also return just names
+names(named_list[1])
+
+#indexing in list of list
+multi_list[1]
+multi_list["Weekend"]
+multi_list$Weekend
+
+multi_list[2]
+
+multi_list[3]
+
+multi_list[3][[1]][1]
+```
+
+Modifying lists
+```{r}
+
+#replace element
+multi_list[3][[1]][1] <- "cat"
+multi_list[3][[1]][1]
+
+#add new element
+multi_list[3][[1]][2] <- "mouse"
+multi_list[3][[1]]
+
+multi_list[4] <- "new"
+multi_list
+
+#remove the last element.
+multi_list[4] <- NULL
+
+#convert to vector
+list_a <- list(2,4,6,8)
+list_b <- list(1,2,3,4)
+
+#try adding together (uncomment to see error)
+# list_a+list_b
+
+vec_a <- unlist(list_a)
+vec_b <- unlist(list_b)
+
+vec_a+vec_b
+
+```
+
+

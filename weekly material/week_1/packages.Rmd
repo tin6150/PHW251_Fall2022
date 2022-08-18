@@ -1,0 +1,153 @@
+---
+title: "Toolkit - Packages"
+author: "Lauren Nelson"
+date: "8/31/2020"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# Packages 
+
+This toolkit will cover the following:
+
+* What is a package?
+* How do packages work in the R environment?
+  + Library (Datahub)
+  + Installation
+  + Documentation
+  + Loading
+* Example
+
+## What is a package?
+
+* R packages are a collection of R functions, compiled code, and sample data
+  + Some narrow, some broad
+  + Some focused on specific industry needs, some focused on refining a specific type of task (import, stats, graphics, etc.)
+  + Some meant to work with other packages (tidyverse is an example of this)
+* Offer an expansion of the capabilities of base R
+  + Improve efficiency or effectiveness of programming 
+* Anyone can create a package 
+* Thousands of packages available 
+* RStudio does create and maintain several very helpful packages
+
+## How to packages work in the R environment?
+
+### Libraries
+
+Packages are contained within a **library**.
+* User library (user or cloud)
+* System library (default packages)
+
+To see all packages already stored in your environment:
+```{r}
+#see the paths to the library
+.libPaths()
+
+#uncomment and run code below to see packages that are available within 
+#your environment
+#open a new tab to see list
+library()
+
+#return list with more information to console; save to an object named "info"
+info <- installed.packages()
+
+#can also use the Packages tab to the right
+```
+
+There are a lot of packages already installed because we are using Datahub, which has an extensive list of packages available for student use.
+
+### Installation 
+
+Packages must be installed into your R Studio environment in order to be used
+* Use install.packages() function
+* Packages tab within RStudio
+* CRAN (https://cran.r-project.org/web/packages/available_packages_by_date.html)
+* Github
+* Note: Often installing a new package will require the installation of other dependent packages (typically automatic)
+
+```{r}
+# install.packages("readr")
+```
+
+Package maintenance
+* Remove
+* Update
+```{r}
+
+#remove an unwanted package using the code below
+# remove.packages("readr")
+
+#return list of packages needing an update
+old_list <- old.packages()
+
+#update all packages
+# update.packages("readr")
+# update.packages()
+
+#can also use the "update" feature on the Package tab
+
+```
+
+### Documentation
+
+More information on packages
+```{r}
+#will open "help"
+help(package = "readr")
+
+```
+Other resources:
+[CRAN] (https://cran.r-project.org/web/packages/available_packages_by_name.html)
+[R Documentation] (https://www.rdocumentation.org/)
+[Tidyverse (when relevant)] (https://www.tidyverse.org/)
+
+
+### Loading in session
+
+To use any of the packages that are installed in your libraries, you must load them into your session using the library() function. Or you can use :: to utilize a single function of a package.
+```{r}
+#to have available for whole script - add to very top!
+library(readr)
+
+#option for a single use
+# readr::read_delim...
+```
+
+
+### Example - so we want to use ggplot2...
+
+As an example, let's say we want to use a functionality of the package ggplot2. 
+
+1. See if ggplot2 is installed in our environment
+
+2. Make sure to understand the documentation
+[Tidyverse] (https://ggplot2.tidyverse.org/) 
+[R Documentation] (https://www.rdocumentation.org/packages/ggplot2/versions/3.3.2)
+[CRAN site] (https://cran.r-project.org/web/packages/ggplot2/index.html)
+[CRAN documentation] (https://cran.r-project.org/web/packages/ggplot2/ggplot2.pdf)
+
+3. Load ggplot2 into our session
+
+```{r}
+#start script 
+library(ggplot2)
+
+ggplot(mpg, aes(displ, hwy, colour = class)) + 
+  geom_point()
+
+#or
+
+# ggplot2::ggplot(mpg, aes(displ, hwy, colour = class)) + 
+  # geom_point()
+
+
+```
+
+
+
+
+

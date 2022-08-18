@@ -1,0 +1,84 @@
+---
+title: "Rmarkdown Example"
+author: "NAME HERE"
+date: "8/10/2021"
+output: pdf_document
+---
+
+# Header 1
+
+## Header 2
+
+### Header 3
+
+###### Header 6
+
+\newpage
+
+* list
+
+- list
+
+- list
+  + sub-list
+  
+1. number 1
+2. number 2
+
+*italics*
+
+**bold**
+
+$$E = mc^{2}$$
+\newpage
+
+```{r a}
+a <- "example"
+a
+```
+
+```{r chunk b, echo=FALSE}
+b <- "example 2"
+b
+```
+
+```{r chunk c, eval=FALSE}
+c <- "example 3"
+c
+```
+
+```{r, include=FALSE}
+d <- "example 4"
+d
+```
+
+```{r}
+d
+```
+
+```{r}
+library(tidyverse)
+
+df <- tibble(
+  x = 1:5, 
+  y = 1, 
+  z = x ^ 2 + y
+)
+```
+
+### jump to me
+
+
+```{r}
+# example of code running off the page
+library(ggplot2)
+
+ggplot(data = ChickWeight, aes(x = Time, 
+                               y = weight, 
+                               color = Diet, group = Chick)) + geom_line() +
+  ggtitle("Growth curve for individual chicks")
+```
+
+
+
+
