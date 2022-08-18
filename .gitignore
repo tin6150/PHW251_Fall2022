@@ -1,3 +1,5 @@
+**/.DS_Store
+
 # History files
 .Rhistory
 .Rapp.history
@@ -7,6 +9,9 @@
 
 # User-specific files
 .Ruserdata
+
+# project files
+.Rproj
 
 # Example code in package build process
 *-Ex.R
@@ -37,3 +42,5 @@ vignettes/*.pdf
 
 # R Environment Variables
 .Renviron
+
+.ipynb_checkpoints
