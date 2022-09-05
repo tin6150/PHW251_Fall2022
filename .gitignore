@@ -44,3 +44,5 @@ vignettes/*.pdf
 .Renviron
 
 .ipynb_checkpoints
+*.pdf
+*.html
