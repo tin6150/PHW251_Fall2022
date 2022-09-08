@@ -1,0 +1,194 @@
+---
+title: "Toolkit - Importing & Exporting"
+author: "Lauren Nelson"
+date: "9/7/2020"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(readr)
+library(readxl)
+```
+
+## Importing & exporting data
+* Importing data 
+  + Example .csv import
+  + Example .xslx import
+* Exporting data
+
+
+### Importing a .csv file
+
+**readr package**
+
+Why readr vs base R (read.csv())?
+
+* The two are fairly similar; many options to specify how your data imports
+* Ultimately, readr is easier to use, control, and reproduce
+* Part of the tidyverse, so works well with other packages that we will use
+
+[readr::read_csv](https://readr.tidyverse.org/reference/read_delim.html)
+
+Arguments 
+
+* file	- 
+  + when using datahub or rstudio cloud, easiest to upload a file to the cloud for import into your session 
+  + can also download files starting with http://, https://, ftp://, or ftps:// straight from the internet
+* col_names	- 
+  + TRUE - first row of the input will be used as the column names
+  + FALSE - column names will be generated automatically: X1, X2, X3 etc.
+  + character vector of column names - values will be used as the names of the columns
+* col_types	
+  + NULL - column types imputed from first 1000 rows
+  + cols() specification - must contain one column specification for each column (full list [here](https://readr.tidyverse.org/reference/cols.html))
+  + cols_only() - specify type for subset of columns to import
+  + string - a compact string representation where each character represents one column (c = character, i = integer, 
+  n = number, d = double, l = logical, f = factor, D = date, T = date time, t = time, ? = guess, or _/- to skip the column)
+* na	- character vector of strings to interpret as missing values
+* skip - number of lines to skip before reading data.
+* n_max	- maximum number of records to read
+
+
+```{r, results="hide", warning=FALSE, message=FALSE}
+
+# read_csv(file,
+#          col_names = TRUE,
+#          col_types = NULL,
+#          locale = default_locale(),
+#          na = c("", "NA"),
+#          quoted_na = TRUE,
+#          quote = "\"",
+#          comment = "", 
+#          trim_ws = TRUE, 
+#          skip = 0,
+#          n_max = Inf, 
+#          guess_max = min(1000, n_max),
+#          progress = show_progress(), 
+#          skip_empty_rows = TRUE)
+
+#import a file via the web
+file_path_csv <- "https://data.chhs.ca.gov/dataset/8eb8839f-52a1-410b-8c4a-5b1c1678bbc2/resource/21fec3a1-ae82-49f4-ae97-fd8c78ca22ee/download/retail-availability-of-electronic-smoking-devices-by-county.csv"
+
+#read in file with no options changed
+esd <- read_csv(
+  file_path_csv
+)
+
+#specify column names
+esd_colnames <- read_csv(
+  file_path_csv,
+  col_names = c("county","yr","pct","ci_l","ci_u")
+)
+
+#notice that when specifying column names, any column names in the csv file are now read 
+#in as row 1, so use skip to change the first read in to 1 rather than the default of 0
+esd_colnames <- read_csv(
+  file_path_csv,
+  col_names = c("county","yr","pct","ci_l","ci_u"),
+  skip = 1
+)
+
+#look at data structure
+str(esd_colnames)
+
+#notice that the percentage and confidence interval columns are reading in as character
+#specify column types using cols(), cols_only(), or the compact string method
+#the commented out lines offer different methods; using cols_only() allows to select
+#a subset of columns to include
+esd_coltypes <- read_csv(
+  file_path_csv,
+  col_names = c("county","yr","pct","ci_l","ci_u"),
+  # col_types = cols(col_character(), col_double(), col_number(), col_number(), col_number()),
+  # col_types = cols_only(county = col_character(), yr = col_double(), pct = col_number()), 
+  col_types = "cdnnn",
+  skip = 1
+)
+
+str(esd_coltypes)
+
+#fix the warnings due to unexpected values by adding * and n/a to the list of values set 
+#to missing
+esd_coltypes <- read_csv(
+  file_path_csv,
+  col_names = c("county","yr","pct","ci_l","ci_u"),
+  col_types = "cdnnn",
+  na = c("", "NA","*","n/a"),
+  skip = 1
+)
+
+str(esd_coltypes)
+
+#save a clean version of the data file
+esd_clean <- esd_coltypes
+
+```
+
+## Import from excel
+
+**readxl package**
+Additional/different arguments than readr::read_csv
+
+* sheet	-  a string (the name of a sheet), or an integer (the position of the sheet). Ignored if the sheet is specified via range. If neither argument specifies the sheet, defaults to the first sheet.
+* range	- A cell range to read from, as described in cell-specification. 
+* col_types	- 
+  + NULL to guess all from the spreadsheet
+  + character vector containing one entry per column from these options: "skip", "guess", "logical", "numeric", "date", "text" or "list". 
+```{r, results="hide", warning=FALSE, message=FALSE}
+#import from folder within RStudio
+#first, must upload desired file 
+
+#see working directory
+getwd()
+
+#use working directory to establish path to file (assuming uploaded to RStudio cloud)
+file_path_excel <- "/home/rstudio/toolkits/data/tb_in_ca.xlsx"
+
+#read in with no extra arguments specified
+tb <- read_excel(
+  file_path_excel
+)
+
+#structure of table
+str(tb)
+
+#utilize arguments to specify column types
+tb_cleaner <- read_excel(
+  file_path_excel,
+  col_types = c("numeric","text","text","numeric","numeric","skip") #specify column types
+)
+
+#clear warnings due to values = .; set to missing using the na argument
+tb_cleanest <- read_excel(
+  file_path_excel,
+  col_types = c("numeric","text","text","numeric","numeric","skip"), #specify column types
+  na = c(".") #specify values to be considered missing
+)
+
+#confirm structure of table is what was desired
+str(tb_cleanest)
+
+
+```
+
+### Exporting data
+This is a lot simpler than importing data. Before exporting consider:
+
+* Who will be using the dataset/table?
+* Will more analysis need to be done, or are you exporting for someone to look at in excel?
+```{r, results="hide", warning=FALSE, message=FALSE}
+
+#export csv - good if needing flexibility for other analytic programs
+readr::write_csv(esd_clean,"/home/rstudio/toolkits/data/esd_clean.csv")
+
+#export to excel - good if others want to look at it in excel (not R)
+openxlsx::write.xlsx(esd_clean,"/home/rstudio/toolkits/data/esd_clean.xslx")
+
+#export RDS - good if you will want to pick it back up in R
+saveRDS(esd_clean,"/home/rstudio/toolkits/data/esd_clean_saved.RDS")
+
+```
+
+### Other file formats
+Check out [haven](https://haven.tidyverse.org/) for importing/exporting SAS, SPSS, Stata

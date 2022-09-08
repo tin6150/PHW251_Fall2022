@@ -1,0 +1,197 @@
+---
+title: "wk5_dplyr_manipulating_rows"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse) #readr, dplyr, and tibble are included in this
+```
+
+## Tidying Rows
+* Extracting rows
+  + filter()
+  + slice() and more
+  + sample_n & sample_frac()
+  + distinct()
+* Adding - add_row()
+* Order - arrange()
+
+
+
+```{r}
+
+#import table of infectious disease by county in CA
+file_path <- "https://data.chhs.ca.gov/dataset/03e61434-7db8-4a53-a3e2-1d4d36d6848d/resource/75019f89-b349-4d5e-825d-8b5960fc028c/download/idb_odp_2001-2018.csv"
+
+#try out read_csv with no specifications
+ids <- read_csv(
+  file_path
+)
+
+ids <- read_csv(
+  file_path,
+  na = c("", "NA","-")
+)
+
+#check out structure 
+str(ids)
+
+
+
+```
+
+**filter()**
+
+Extract (or subset) rows from table based on column/variable values
+
+* Key operators/functions
+  + equal (==), not equal (!=), greater than (> or >=), or less than (< or <=)
+  + %in% or !%in% (not in)
+  + is.na() to return missing; !is.na() to return non-missing
+  + between(), near()
+* Multiple expressions can be combined using & (and) or | (or)
+```{r}
+#filter to have 
+# Salmonellosis, Listeriosis
+# Total 
+# Bay Area
+# Population >100000
+# 2018
+
+#filter where disease is Salmonellosis or Listeriosis
+id_sub <- filter(ids, Disease %in% c("Salmonellosis","Listeriosis"))
+#or
+id_sub <- filter(ids, Disease=="Salmonellosis" | Disease=="Listeriosis")
+
+#filter where disease is Salmonellosis or Listeriosis and total sex (don't need male or female)
+id_sub <- filter(ids, Disease %in% c("Salmonellosis","Listeriosis") & Sex=="TOTAL" )
+id_sub <- filter(ids, Disease %in% c("Salmonellosis","Listeriosis"), Sex=="TOTAL" )
+
+#filter where disease is Salmonellosis or Listeriosis, total sex, bay area
+bay_area <- c("ALAMEDA","CONTRA COSTA","SAN FRANCISCO", "MARIN", "SAN MATEO", "SONOMA", 
+              "NAPA", "SOLANO","SANTA CLARA")
+
+id_sub <- filter(ids, Disease %in% c("Salmonellosis","Listeriosis") & 
+                   Sex=="TOTAL" & County %in% bay_area)
+
+id_sub <- filter(ids, Disease %in% c("Salmonellosis","Listeriosis") & 
+                   Sex=="TOTAL" & County %in% bay_area & Year==2018)
+
+#other examples
+#keep rows that contain the maximum year
+id_sub_a <- filter(ids, Year==max(Year) )
+
+#keep rows from 2017-2018 
+id_sub_b <- filter(ids, between(Year,2017,2018) )
+
+#keep rows that are not missing rate
+id_sub_c <- filter(ids, !is.na(Rate))
+
+```
+
+**slice()**
+
+* slice(): use : or c()
+* slice_head() or _tail(): n for number of rows
+* slice_min() or _max(): 
+  + n for number of rows
+  + order_by to select column to sort by
+  + with_ties to indicate if tie rows are included
+```{r}
+#from data for all counties, for 2018, Listeriosis
+lister_2018 <- filter(ids,Year==2018 & Disease=="Listeriosis" & Sex=="TOTAL")
+
+#slice using : 
+lister_2018a <- slice(lister_2018, 15:n())
+
+#slice using c()
+lister_2018b <- slice(lister_2018, c(5,10,15,20,25))
+
+#slice_head
+lister_head <- slice_head(lister_2018,n=10)
+
+#slice_tail
+lister_tail <- slice_tail(lister_2018,n=10)
+
+#slice_max
+lister_max <- slice_max(lister_2018, order_by=Cases, n=10, with_ties = FALSE)
+
+#slice_min
+lister_min <- slice_min(lister_2018, order_by=Cases, n=3, with_ties = TRUE)
+
+
+```
+
+**sample - sample_n & sample_frac()**
+
+* size: sample_n use number of rows; sample_frac using proportion of rows (between 0 and 1)
+* replace: TRUE will sample with replacement; FALSE will not sample with replacement
+```{r}
+
+#random sample of 10 counties
+lister_samp_n <- sample_n(lister_2018,size=10,replace=FALSE)
+
+#random sample of 10% of counties
+lister_samp_frac <- sample_frac(lister_2018,size=.1,replace=FALSE)
+
+```
+
+**distinct()**
+
+* single or multiple columns
+* keep_all to keep columns not listed (TRUE) or exclude columns not listed (FALSE)
+```{r}
+#return distinct rows
+id_distinct <- distinct(id_sub)
+
+#return unique counties
+id_distinct <- distinct(id_sub, County)
+
+#return unique county and disease combinations; keep all columns
+id_distinct <- distinct(id_sub, County, .keep_all=TRUE)
+
+#return unique county and disease combinations
+id_distinct <- distinct(id_sub, County, Disease)
+
+```
+
+
+**tibble::add_row()**
+
+* provide name/value pairs for columns that already exist
+* unset columns will get an NA value
+```{r}
+#add row to id_distinct with Disease and County specified
+#add another row with only County specified
+id_add <- id_distinct %>%
+  add_row(Disease = "E. Coli", County = "San Diego") %>%
+  add_row(County = "Orange")
+
+
+```
+
+
+**arrange()**
+
+* indicate column(s) to sort by
+* use desc() to indicate a descending sort
+```{r}
+#order by Disease
+id_order <- arrange(id_sub, Disease)
+
+#order by cases 
+id_order <- arrange(id_sub, Disease, Cases)
+
+#order by cases descending
+id_order <- arrange(id_sub, Disease, desc(Cases))
+
+#order by cases descending
+id_order <- arrange(id_sub, desc(Disease), desc(Cases))
+#or
+id_order <- arrange(id_sub, desc(Disease,Cases))
+
+
+```
+

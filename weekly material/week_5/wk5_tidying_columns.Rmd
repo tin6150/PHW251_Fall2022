@@ -1,0 +1,165 @@
+---
+title: "wk5_dplyr_manipulating_columns"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse) #dplyr & tibble are included in this
+
+```
+
+## Tidying (or manipulating) table columns
+* Extracting columns
+  + select(), pull()
+* Rename
+* Adding
+  + mutate()
+
+
+```{r}
+
+#import file of infectious disease data by county
+file_path <- "https://data.chhs.ca.gov/dataset/03e61434-7db8-4a53-a3e2-1d4d36d6848d/resource/75019f89-b349-4d5e-825d-8b5960fc028c/download/idb_odp_2001-2018.csv"
+
+#import as is; not going to fix the NA values in Rate (will address later)
+ids <- read_csv(
+  file_path
+)
+
+#check out table structure/types
+str(ids)
+
+```
+
+**select()**
+
+* select multiple columns to extract/subset
+* : to select range
+* c() to specify list of columns/variables (use - to exclude)
+* ! to take the complement of a set of columns
+* helper functions
+  + everything(), last_col()
+  + pattern matching: starts_with(), ends_with(), contains(), matches()
+
+```{r}
+#drop rate (use - or !)
+id_sub <- select(ids, !Rate)
+id_sub <- select(ids, -Rate)
+
+#drop lower and upper ci
+id_sub <- select(ids,-contains("CI"))
+#or
+id_sub <- select(ids,!contains("CI"))
+#or use ends with
+id_sub <- select(ids,!ends_with("CI"))
+
+#create new table that excludes the confidence intervals and the pre-calculated rate
+id_sub <- select(ids,c(Disease,County,Year,Sex,Cases,Population))
+#or
+id_sub <- select(ids,Disease:Population)
+#select and change order of columns
+id_sub <- select(ids,c(Population,Disease,County,Year,Sex,Cases))
+
+
+
+```
+
+**pull()**
+
+create a vector from column values
+
+```{r}
+#create a vector of unique diseases in table
+diseases <- id_sub %>%
+  distinct(Disease) %>%
+  pull(Disease)
+
+#since there is only one column, could also use 
+diseases <- id_sub %>%
+  distinct(Disease) %>%
+  pull()
+
+#named vector of case counts, named by county
+county_counts <- id_sub %>%
+  filter(Disease=="Zika Virus Infection" & Year==2018 & Cases>0 & Sex=="TOTAL") %>%
+  pull(Cases,name=County)
+
+county_counts
+
+```
+
+**rename()**
+
+* provide new name = old name
+* rename_with() can be used to apply a function to all column names
+```{r}
+
+#rename single variable (and keep all others the same)
+ids_rename <- rename(ids, disease=Disease)
+
+#rename multiple variables
+ids_rename <- rename(ids, disease=Disease, county=County)
+
+#rename all - this line will rename all variables as lower and replace spaces with _ 
+#the .x is used as a placeholder for column names since this will be applied to all columns
+ids_rename <- rename_with(ids, ~ tolower(gsub(" ","_",.x,fixed=TRUE)))
+
+#can also rename as part of the select statement, but will only include selected columns
+ids_rename2 <- select(ids,disease=Disease)
+```
+
+**mutate()**
+
+* create new columns, or overwrite existing ones
+* values
+  + vector of length 1
+  + vector of length of the data frame
+  + NULL to remove column
+  + calculation or function based one existing columns (a lot of options!!)
+```{r}
+
+#create a table with Campylobacteriosis for LA; only keep rows with TOTAL
+id_campy <- ids_rename %>%
+  filter(disease=="Campylobacteriosis" & sex=="TOTAL") %>%
+  arrange(year)
+
+#use mutate to clean up the Rate column
+ids_campy_rate <- id_campy %>%
+  mutate(rate = na_if(rate,"-"),
+         rate_num = as.numeric(rate),
+         rate_clean = str_remove(rate,"[*]"),
+         rate_clean = as.numeric(rate_clean),
+         rate_calc = 100000*cases/population, 
+         rate_check = near(rate_clean,rate_calc,tol=0.001),
+         high_rate = rate_calc>10
+  )
+
+#clean up other columns
+ids_campy_clean <- ids_campy_rate %>%
+  select(-c(sex,rate,rate_num,rate_clean,rate_check,high_rate)) %>%
+  mutate(county=str_to_title(county),
+         state = "CA",
+         county_small = if_else(population<100000,"small","not small"),
+         county_cat = case_when(
+           population<100000 ~ "small",
+           population<1000000 ~ "med",
+           TRUE ~ "large"
+         ),
+         ci = paste0("(",`lower_95%_ci`,", ",`upper_95%_ci`,")")
+         ) 
+
+#subset for LA and calculate difference between years
+id_campy_la <- ids_campy_clean %>%
+  filter(county=="Los Angeles") %>%
+  select(disease,year,cases) %>%
+  mutate(cumulative_cases = cumsum(cases),
+         cumulative_mean_cases = cummean(cases),
+         cases_last_year = lag(cases),
+         cases_change = cases - cases_last_year
+         )
+
+
+
+```
