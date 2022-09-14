@@ -66,8 +66,8 @@ id_sub <- filter(ids, Disease %in% c("Salmonellosis","Listeriosis"))
 id_sub <- filter(ids, Disease=="Salmonellosis" | Disease=="Listeriosis")
 
 #filter where disease is Salmonellosis or Listeriosis and total sex (don't need male or female)
-id_sub <- filter(ids, Disease %in% c("Salmonellosis","Listeriosis") & Sex=="TOTAL" )
-id_sub <- filter(ids, Disease %in% c("Salmonellosis","Listeriosis"), Sex=="TOTAL" )
+id_sub <- filter(ids, Disease %in% c("Salmonellosis","Listeriosis") & Sex=="Total" )
+id_sub <- filter(ids, Disease %in% c("Salmonellosis","Listeriosis"), Sex=="Total" )
 
 #filter where disease is Salmonellosis or Listeriosis, total sex, bay area
 bay_area <- c("ALAMEDA","CONTRA COSTA","SAN FRANCISCO", "MARIN", "SAN MATEO", "SONOMA", 
@@ -101,7 +101,7 @@ id_sub_c <- filter(ids, !is.na(Rate))
   + with_ties to indicate if tie rows are included
 ```{r}
 #from data for all counties, for 2018, Listeriosis
-lister_2018 <- filter(ids,Year==2018 & Disease=="Listeriosis" & Sex=="TOTAL")
+lister_2018 <- filter(ids,Year==2018 & Disease=="Listeriosis" & Sex=="Total")
 
 #slice using : 
 lister_2018a <- slice(lister_2018, 15:n())
@@ -189,8 +189,7 @@ id_order <- arrange(id_sub, Disease, desc(Cases))
 
 #order by cases descending
 id_order <- arrange(id_sub, desc(Disease), desc(Cases))
-#or
-id_order <- arrange(id_sub, desc(Disease,Cases))
+
 
 
 ```

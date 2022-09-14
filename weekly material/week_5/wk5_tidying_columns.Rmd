@@ -122,7 +122,7 @@ ids_rename2 <- select(ids,disease=Disease)
 
 #create a table with Campylobacteriosis for LA; only keep rows with TOTAL
 id_campy <- ids_rename %>%
-  filter(disease=="Campylobacteriosis" & sex=="TOTAL") %>%
+  filter(disease=="Campylobacteriosis" & sex=="Total") %>%
   arrange(year)
 
 #use mutate to clean up the Rate column
@@ -147,7 +147,7 @@ ids_campy_clean <- ids_campy_rate %>%
            population<1000000 ~ "med",
            TRUE ~ "large"
          ),
-         ci = paste0("(",`lower_95%_ci`,", ",`upper_95%_ci`,")")
+         ci = paste0("(",`lower_95__ci`,", ",`upper_95__ci`,")")
          ) 
 
 #subset for LA and calculate difference between years
