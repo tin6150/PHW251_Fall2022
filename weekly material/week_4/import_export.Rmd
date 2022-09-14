@@ -10,6 +10,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 library(readr)
 library(readxl)
+
 ```
 
 ## Importing & exporting data
@@ -143,7 +144,7 @@ Additional/different arguments than readr::read_csv
 getwd()
 
 #use working directory to establish path to file (assuming uploaded to RStudio cloud)
-file_path_excel <- "/home/rstudio/toolkits/data/tb_in_ca.xlsx"
+file_path_excel <- "tb_in_ca.xlsx"
 
 #read in with no extra arguments specified
 tb <- read_excel(
@@ -180,13 +181,13 @@ This is a lot simpler than importing data. Before exporting consider:
 ```{r, results="hide", warning=FALSE, message=FALSE}
 
 #export csv - good if needing flexibility for other analytic programs
-readr::write_csv(esd_clean,"/home/rstudio/toolkits/data/esd_clean.csv")
+readr::write_csv(esd_clean,"esd_clean.csv")
 
 #export to excel - good if others want to look at it in excel (not R)
-openxlsx::write.xlsx(esd_clean,"/home/rstudio/toolkits/data/esd_clean.xslx")
+openxlsx::write.xlsx(esd_clean,"esd_clean.xslx")
 
 #export RDS - good if you will want to pick it back up in R
-saveRDS(esd_clean,"/home/rstudio/toolkits/data/esd_clean_saved.RDS")
+saveRDS(esd_clean,"esd_clean_saved.RDS")
 
 ```
 
