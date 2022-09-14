@@ -74,10 +74,10 @@ bay_area <- c("ALAMEDA","CONTRA COSTA","SAN FRANCISCO", "MARIN", "SAN MATEO", "S
               "NAPA", "SOLANO","SANTA CLARA")
 
 id_sub <- filter(ids, Disease %in% c("Salmonellosis","Listeriosis") & 
-                   Sex=="TOTAL" & County %in% bay_area)
+                   Sex=="Total" & County %in% bay_area)
 
 id_sub <- filter(ids, Disease %in% c("Salmonellosis","Listeriosis") & 
-                   Sex=="TOTAL" & County %in% bay_area & Year==2018)
+                   Sex=="Total" & County %in% bay_area & Year==2018)
 
 #other examples
 #keep rows that contain the maximum year

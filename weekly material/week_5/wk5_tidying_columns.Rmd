@@ -83,7 +83,7 @@ diseases <- id_sub %>%
 
 #named vector of case counts, named by county
 county_counts <- id_sub %>%
-  filter(Disease=="Zika Virus Infection" & Year==2018 & Cases>0 & Sex=="TOTAL") %>%
+  filter(Disease=="Zika Virus Infection" & Year==2018 & Cases>0 & Sex=="Total") %>%
   pull(Cases,name=County)
 
 county_counts
