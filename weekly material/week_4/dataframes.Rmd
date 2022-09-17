@@ -1,0 +1,270 @@
+---
+title: "Toolkit - Data Frames"
+author: "Lauren Nelson"
+date: "9/7/2020"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+```
+
+## Data frames
+* Creating data frames
+  + From vectors
+  + From a built in dataset
+* Creating new rows and columns
+* Indexing, extracting, reassigning 
+* Exploring data frames
+* Data frames versus tibbles
+
+### Creating from vectors
+Data frames can be created from vectors using the data.frame() function. Vectors must be of the same length. 
+```{r}
+
+#defaults for data.frame() for reference
+# data.frame(..., 
+#   row.names = NULL, 
+#   check.rows = FALSE,
+#   check.names = TRUE, 
+#   fix.empty.names = TRUE,
+#   stringsAsFactors = default.stringsAsFactors())
+
+#create data frame without specifying options (will use the defaults specified in the 
+#commented out section above)
+testing_plain <- data.frame(
+  county = c("Alameda","Contra Costa","Marin"),
+  total_tests = c(500,745,832),
+  pos_tests = c(43, 32, 30)
+)
+
+#look at the structure of the data frame
+#note that county is reading in as a 'factor', which will make it challenging to add to or 
+#manipulate the data frame
+#(factors will be covered in more detail in the next few weeks)
+str(testing_plain)
+
+#set stringsAsFactors=FALSE to allow character values to read in as character, rather than 
+#factor
+testing <- data.frame(
+  county = c("Alameda","Contra Costa","Marin"),
+  total_tests = c(500,745,832),
+  pos_tests = c(43, 32, 30),
+  stringsAsFactors = FALSE
+)
+
+#check the structure to make sure column types are correct
+str(testing)
+
+#print to console
+testing
+
+#row names: create data frame which utilizes the row.names option and set the row name to 
+testing_row_name <- data.frame(
+  county = c("Alameda","Contra Costa","Marin"),
+  total_tests = c(500,745,832),
+  pos_tests = c(43, 32, 30),
+  row.names = "county"
+)
+
+#print to console - notice that there are no longer row numbers 1-3, they have been 
+#replaced by county (and there is no longer a column labeled 'county')
+testing_row_name
+```
+
+### Indexing,extracting, reassigning
+* [[]] or $ to create a vector
+* [] to create a new data frame
+```{r}
+#using [ ], [[ ]], and $
+
+#output or create a vector of the values in a column
+#note: there are multiple ways to do this - all 3 lines below will return the same vector
+testing[["county"]]
+testing[[1]]
+testing$county
+
+#assign the vector to an object
+county_vector <- testing[["county"]]
+
+#output a dataframe of the values in a column
+county_df <- testing["county"]
+county_df2 <- testing[1]
+
+#subset rows
+#using the row number - can be 1:2 or c(1,2)
+testing[1:2,]  
+#based on a specified data elements
+testing[which(testing$total_tests>500),]
+
+#subset columns based on column name or number
+testing[,c("total_tests","pos_tests")]
+testing[,c(2,3)]
+
+#subset rows and columns
+testing[c(1,2),c("total_tests","pos_tests")]
+
+#Reassign a value of a cell
+testing[2,1] <- "Yolo"
+
+testing
+
+#Reassign column values
+testing$pos_tests <- c(52,61,89)
+
+```
+
+
+### Adding rows
+```{r}
+
+#add a row using rbind()
+#create list that includes an element for each column - using a list is important since there 
+#are data of different types in the data frame
+add_county <- list("San Diego", 1200, 73)
+
+#use row bind - will combine in the order given
+testing <- rbind(testing,add_county)
+
+#row bind can also be used to combine two compatible data frames 
+#(compatible meaning they have the same columns and data types)
+testing2 <- data.frame(
+  county = c("Imperial","Riverside"),
+  total_tests = c(410,760),
+  pos_tests = c(84,57),
+  stringsAsFactors = FALSE
+)
+
+#combine the two data frames
+#note: calling this new data frame 'testing' will save over our previous data 
+#frame named 'testing'
+testing <- rbind(testing,testing2)
+
+```
+
+
+### Adding columns
+```{R}
+#add a column
+#create a new column called 'id'
+testing$id <- 1:6
+
+#another way to do this is to create a vector of column values
+id <- 1:6
+
+#and add in using column bind
+testing_id2 <- cbind(testing,id)
+
+#adding a column based on other columns
+testing$pct_pos <- round(100*testing$pos_tests/testing$total_tests,1)
+
+```
+
+### Restructuring
+```{r}
+#reorder columns
+testing <- testing[,c(4,1,2,3,5)]
+
+#reorder rows based on values in a specified column
+testing <- testing[order(testing$county),]
+
+#create a new df without the county column
+#option 1: list columns by order or name
+testing_nocounty <- testing[,c(1,3,4,5)]
+
+#option 2: use the "-" to indicate which columns to exclude
+testing_nocounty2 <- testing[,c(-2)]
+
+#testing_nocounty will be the same as testing_nocounty2
+
+```
+
+### Data frames vs. tibbles 
+Tibbles are a type of dataframe that are used within the tidyverse. They were essentially created to be a bit more flexible and user friendly. Key differences: 
+
+* No row names
+* Column names can have spaces, start with characters, as long as within back-ticks
+* When a tibble is printed to the console, it will automatically only include 10 lines, and will also include the data types
+* Can handle a vector of length 1 (will assign value to all rows)
+* Can create columns by calculating on others
+```{r}
+#try creating a tibble version similar to the data frame created above
+testing_tib <- tibble(
+  county = c("Alameda","Contra Costa","Marin"),
+  state = "CA",
+  total_tests = c(500,745,832),
+  pos_tests = c(43, 32, 30),
+  `Percent Positive Tests` = round(100*(pos_tests/total_tests),1)
+)
+
+#print to console
+testing_tib
+
+#compare tibble...
+class(testing_tib)
+typeof(testing_tib)
+
+#...to data frame
+class(testing)
+typeof(testing)
+
+```
+
+
+### Creating from built in data frames
+There are many built in data frames in RStudio. Some are available through base R, others can be accessed through packages. These are great options for testing out new skills, or creating reproducible examples.
+```{r}
+#generate list of available data in RStudio (uncomment to run)
+# data()
+
+#example of a package that includes more dataset options
+library(nycflights13)
+
+#this is a good dataset because it includes >300k rows and has both numeric and character #data
+#running this line will add "flights" object to the environment pane on the right. 
+#it may show up as a <promise>, in which case click on it in the environment pane and 
+#the whole dataset will load
+data("flights")
+
+#explore flights
+#structure
+str(flights)
+
+#number of rows and colums
+nrow(flights)
+ncol(flights)
+
+#type/class of object
+class(flights)
+typeof(flights)
+
+#summary - mean/median/quartiles
+summary(flights$distance)
+
+#unique values
+unique(flights$origin)
+
+#frequency
+table(flights$carrier)
+
+#cross tab (create as object to make it easier to view)
+cross_tab <- data.frame(table(flights$origin, flights$dest))
+
+#add column names to cross tab table
+colnames(cross_tab) <- c("origin","dest","freq")
+
+#limit to only pairs with frequency >0
+cross_tab <- cross_tab[which(cross_tab$freq>0),]
+
+#plot (use Help for more options)
+#specify type = "p" to plot points
+plot(flights$dep_time, flights$dep_delay, type = "p")
+
+#specify type = "b" to plot both points and line
+plot(flights$month,flights$dep_delay, type = "b")
+
+```
+
+
