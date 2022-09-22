@@ -1,0 +1,50 @@
+---
+title: "Pivoting R Notebook"
+output: html_notebook
+---
+
+### Pivoting
+
+[Pivot longer documentation](https://tidyr.tidyverse.org/reference/pivot_longer.html)
+[Pivot wider documentation](https://tidyr.tidyverse.org/reference/pivot_wider.html)
+
+```{r warning=FALSE}
+
+library(data.table)
+library(tidyr)
+library(dplyr)
+library(stringr)
+
+demog_2010_20 <- fread("data/DOFP3_2010_2020_demo.csv")
+
+pivot_example <- demog_2010_20 %>%
+  pivot_wider(names_from = "year", names_prefix = "year_", values_from = dof_pop)
+
+
+oshpd_payers <- fread("../../midterm/inpatient_payer_ca.csv") %>%
+  rename_all(. %>% tolower %>% gsub(" ", "_", .) %>% gsub("/", "_", .)) %>%
+  mutate(county_name = str_to_title(county_name)) %>%
+  as_tibble()
+
+pivot_example <- demog_2010_20 %>%
+  pivot_wider(names_from = "year", names_prefix = "year_", values_from = dof_pop)
+
+pivot_long_example <- pivot_example %>%
+  pivot_longer(cols = starts_with("year_"), names_to = "year", values_to = "dof_pop", names_prefix = "year_")
+
+oshpd_wide <- oshpd_payers %>%
+  group_by(county_name, year) %>%
+  summarize(pt_count = sum(count)) %>%
+  pivot_wider(names_from = year, values_from = pt_count, values_fill = 0, names_prefix = "year_")
+
+
+osphd_visits_year <- oshpd_payers %>%
+  left_join(., demog_2010_20, by=c("county_name" = "county", "year" = "year")) %>%
+  group_by(county_name, year, dof_pop) %>%
+  summarize(total_patients = replace_na(sum(count), 0)) %>%
+  mutate(visits_per_capita = total_patients / dof_pop) %>%
+  select(county_name, year, visits_per_capita) %>%
+  pivot_wider(names_from = year, values_from = visits_per_capita, names_prefix = "year_")
+
+```
+
