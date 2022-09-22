@@ -1,0 +1,202 @@
+---
+title: "live_session_2_student"
+output: pdf_document
+date: "`r Sys.Date()`"
+---
+
+## Loading in tidyverse library and setting up knitr for proper knitting
+Note: the *tidyverse* package includes all of the *dplyr*, *tibble*, *ggplot2*, *forcats*, *stringr*, *readr*, *purr*, and *tidyr* packages. Therefore, you will not need to call those individual packages if you call in the tidyverse package.
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+## Importing a file
+Import a dataset from the California Health and Human Services Open Data Portal (CHHS ODP). The primary primary purpose of the CHHS ODP is to collect health related data in California and to make this information available to the public. 
+
+```{r import}
+# creating a file path to directly import a csv from the internet
+file_path <- "https://data.chhs.ca.gov/dataset/e283ee5a-cf18-4f20-a92c-ee94a2866ccd/resource/130d7ba2-b6eb-438d-a412-741bde207e1c/download/covid19vaccinesbycounty.csv"
+
+# import full file to see what it looks like
+vaccine_full <- read_csv(file_path)
+```
+
+
+## Quick exploration
+* Structure of dataset/table
+* Unique chemical names
+* Frequency of product type
+* Distribution of dates reported
+
+```{r}
+# first 6 rows of the dataset
+head(vaccine_full)
+
+# structure of dataset
+str(vaccine_full)
+
+# Unique county names - returns a list of values 
+unique(vaccine_full$county)
+```
+
+
+After taking a closer look at the raw data and seeing that it is a very large dataset, we decide that we only need to keep columns that are important for our analysis because it is a best practice to only use the data that you need. Using minimally necessary data speeds up data processing because it takes up less memory storage. 
+
+\newpage
+
+**BATCH 1: TIDYING COLUMNS (QUESTIONS 1, 2, 3)**
+
+## Question 1
+
+One way of subsetting the columns in your dataset is by doing this *during* the initial import step. Try to import the file, however this time only import the following columns and ensure they are the corresponding data types:
+* county - character
+* administered_date - date (We want to convert the dates to M,D,Y format)
+* cumulative_total_doses - double 
+* cumulative_pfizer_doses - double
+* cumulative_moderna_doses - double
+* cumulative_jj_doses - double
+
+```{r custom_import}
+# import only the columns we need
+# vaccine_columns_1 <- read_csv(
+#  file_path,
+# )
+# vaccine_columns_1
+```
+
+\newpage
+
+## Question 2
+
+A second way of limiting (subsetting) the number of columns in your dataset is by doing this *after* importing your data. Try to only select the same columns as in Question 1 using *Base R*.
+
+```{r}
+# subsetting columns using Base R
+# vaccine_columns_2 <- vaccine_full[ ]
+# vaccine_columns_2
+```
+
+\newpage
+
+## Question 3 
+
+After subsetting your columns using Base R, try using *tidyverse* code to subset your columns. Hint: think of the *dplyr* function that is used to *select* columns.
+
+```{r}
+# subsetting columns using dplyr
+# vaccine_columns_3 <- *insert function*(vaccine_full, )
+# vaccine_columns_3
+```
+
+\newpage
+
+**BATCH 2: TIDYING ROWS (QUESTIONS 4, 5, 6)**
+
+Once we have limited the amount of columns in our data set, we now want to subset the rows as well. Therefore your task will be to create a subset with:
+* only most recent records for vaccinations
+* only Southern California Counties (Los Angeles, Orange, Santa Barbara, Ventura, San Bernardino, Kern, San Luis Obispo, Imperial, Riverside, San Diego) Hint: use %in% instead == when you are trying to subset using a list such as these counties (Lauren posted on Ed outlining why there is a distinction)
+
+Note: You can use any one of the *vaccine_columns_1*, *vaccine_columns_2*, and *vaccine_columns_3* as your starting dataframe. The resulting data frame will be the same.
+
+\newpage
+
+## Question 4 
+
+Perform the subsetting using *Base R*. Hint: the *which* function may be important.
+
+```{r}
+# method 1: which
+
+# vaccine_rows_1 <- vaccine_columns_1[ ]
+# vaccine_rows_1
+```
+
+\newpage
+
+## Question 5
+
+Perform the subsetting using a the *subset* function. Hint: Copy the code from Question 4 and change code accordingly.
+
+```{r}
+# method 2: subset function
+
+# vaccine_rows_2 <- *insert function*(vaccine_columns_1, )
+# vaccine_rows_2
+```
+
+\newpage
+
+## Question 6
+
+Perform the subsetting using a *dplyr* function. Hint: Copy the code from Question 5 and change code accordingly (the only difference should be the function itself).
+
+```{r}
+# using filter wto select rows only containing a certain date and county
+# method 3: filter function (tidyverse - dplyr)
+
+# vaccine_rows_3 <- *insert function*(vaccine_columns_1, )
+# vaccine_rows_3
+```
+
+\newpage
+
+**BATCH 3: RENAMING, CREATING, AND REORDERING COLUMNS AND INTEGRATING AN IF ELSE STATEMENT (QUESTIONS 7, 8, 9, 10)**
+
+## Question 7
+
+Now that we have limited our data set to 10 rows and 4 variables, *rename* the following columns names using a *dplyr* function:
+* "cumulative_booster_recip_count" to "boostered"
+* "booster_eligible_population" to "eligible" 
+Note: you can use *vaccine_rows_1*, *vaccine_rows_2*, or *vaccine_rows_3* as your starting data frame
+
+```{r}
+# vaccine_rename <- *insert function*(vaccine_rows_1, )
+# vaccine_rename
+```
+
+\newpage
+
+## Question 8
+
+Create a new column using a *dplyr* function called *perc_boosted* that contains the percent of the *eligible* population that has been *boosted* rounded to 2 decimal places.
+
+```{r}
+# vaccine_perc <- *insert function*(vaccine_rename, )
+# vaccine_perc
+```
+
+\newpage
+
+## Question 9
+
+Use a  *dplyr* function to assort dateframe in descending order based on the *perc_boosted* column.
+```{r}
+# vaccine_arranged <- *insert function*(vaccine_perc, )
+# vaccine_arranged
+```
+
+\newpage
+
+## Question 10
+
+The goal for the state was to reach a level of 50% of the population being *boostered*. Create a new column using a *dplyr* function called *goal_met* that indicates whether or not each county met the goals of the state using the *if_else* function. Use *Y* to indicate that a level of 50% was reached and *N* to indicate that it was not reached.
+
+```{r}
+# vaccine_goal <- *insert function*(vaccine_arranged, )
+# vaccine_goal
+```
+
+\newpage
+
+**BONUS: TIDYING THE DATA SET IN ONE STEP**
+
+## Bonus
+
+Perform all of the same tidying to arrive at the *vaccine_goal* dataframe in one step. Begin with the *vaccine_full* dataframe. Hint: You will only need to use dplyr functions and a pipe operator will be useful throughout.
+
+```{r}
+# using filter to select rows only containing a certain date and county
+# vaccine_tidy <- vaccine_full 
+# vaccine_tidy 
+```
