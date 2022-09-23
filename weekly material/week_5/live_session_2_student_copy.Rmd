@@ -51,11 +51,9 @@ After taking a closer look at the raw data and seeing that it is a very large da
 
 One way of subsetting the columns in your dataset is by doing this *during* the initial import step. Try to import the file, however this time only import the following columns and ensure they are the corresponding data types:
 * county - character
-* administered_date - date (We want to convert the dates to M,D,Y format)
-* cumulative_total_doses - double 
-* cumulative_pfizer_doses - double
-* cumulative_moderna_doses - double
-* cumulative_jj_doses - double
+* cumulative_booster_recip_count  - double
+* booster_eligible_population - double
+* administered_date - date
 
 ```{r custom_import}
 # import only the columns we need
