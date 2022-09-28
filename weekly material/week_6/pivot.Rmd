@@ -21,7 +21,7 @@ pivot_example <- demog_2010_20 %>%
   pivot_wider(names_from = "year", names_prefix = "year_", values_from = dof_pop)
 
 
-oshpd_payers <- fread("../../midterm/inpatient_payer_ca.csv") %>%
+oshpd_payers <- fread("data/inpatient_payer_ca.csv") %>%
   rename_all(. %>% tolower %>% gsub(" ", "_", .) %>% gsub("/", "_", .)) %>%
   mutate(county_name = str_to_title(county_name)) %>%
   as_tibble()
