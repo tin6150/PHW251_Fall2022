@@ -1,0 +1,163 @@
+---
+title: "Week 7: Detecting unexpected or invalid values"
+author: "Lauren Nelson"
+date: "9/28/2020"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(lubridate)
+```
+
+**Example**
+Testing counts by group
+
+Goal: Calculate positivity rates by day for Group 1 and Group 2 in August 2020
+
+Columns:
+
+* test_date
+* group
+* total_tests
+* pos_tests
+* group_pop
+
+
+**Old-fashioned way**
+
+Import & open table 
+```{r}
+
+file_path <- "data/testing_example.xlsx"
+
+testing <- readxl::read_excel(
+  file_path
+)
+
+#fix the NA issue with the total_tests column
+testing <- readxl::read_excel(
+  file_path,
+  na="NA"
+)
+
+#confirm total_tests is now numeric
+str(testing)
+
+#create new logical variables to help with looking at our data
+#total_gt_pos will return TRUE where total_tests>pos_tests
+#total_gt_pop will return TRUE where group_pop>total_tests
+testing_temp <- testing %>%
+  mutate(total_gt_pos = total_tests>pos_tests,
+         total_gt_pop = group_pop>total_tests)
+
+#one instance where pos_tests > total_tests (data entry error?)
+#one instance where total_tests > group_pop (outlier?)
+
+```
+
+**Utilize descriptive functions**
+
+* Unique - list of unique values
+* table - frequency
+  + useNA to include frequency of NA ("ifany" to include when relevant, "always" to include regardless)
+  + can cross tab
+* summary - numeric stats
+* sum(is.na()) - number missing
+```{r}
+# test_date
+table(testing$test_date, useNA="always")
+summary(as_date(testing$test_date))
+sum(is.na(testing$test_date))
+
+#need to limit dates to aug 2020 only; get rid of missing
+
+# group
+unique(testing$group)
+table(testing$group, useNA = "ifany")
+
+#need to standardize the group name; remove group 3 and NA's before analyzing
+
+# total_tests
+summary(testing$total_tests)
+sum(is.na(testing$total_tests))
+
+#need to look into the outlier - 45,000 tests; handle missing values
+
+# pos_tests
+summary(testing$pos_tests)
+sum(is.na(testing$pos_tests))
+
+#okay, but needs comparison with total tests
+
+# group_pop
+table(testing$group, testing$group_pop, useNA="always")
+
+#okay for group 1 and 2
+
+
+```
+
+**Plots**
+
+ggplot() - flexible plotting for one or two variables
+```{r}
+
+#one variable
+#categorical - group
+ggplot(data = testing, mapping = aes(x = group)) +
+  geom_bar()
+
+#continuous - positive tests
+ggplot(data = testing,mapping = aes(x = pos_tests)) +
+  geom_histogram(binwidth=5)
+
+#continuous - total tests
+ggplot(data = testing,mapping = aes(x = total_tests)) +
+  geom_histogram(binwidth = 50) +
+  xlim(0,500)
+  
+```
+
+```{r}
+
+#two variables
+#two categorical (continuous can be used here as well)
+ggplot(data = testing, mapping = aes(x = total_tests, y = pos_tests)) + 
+  geom_count() +
+  xlim(0,500)
+
+ggplot(data = testing, mapping = aes(x = total_tests, y = group)) + 
+  geom_count()+
+  xlim(0,500)
+
+#one categorical, one continuous 
+#total_tests by group
+ggplot(data = testing, mapping = aes(x = total_tests, y = group)) + 
+  geom_boxplot() +
+  xlim(0,500)
+
+#two continuous
+#total_tests vs pos_tests
+ggplot(data = testing, mapping = aes(x = total_tests, y = pos_tests)) + 
+  geom_point() +
+  geom_abline(intercept = 0, slope = 1) +
+  xlim(0,10) +
+  ylim(0,10)
+
+#total_tests vs group_pop
+ggplot(data = testing_temp, mapping = aes(x = group_pop, y = total_tests)) + 
+  geom_point()  +
+  geom_abline(intercept = 0, slope = 1) 
+
+```
+
+
+
+
+
+
+
+

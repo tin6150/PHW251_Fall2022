@@ -1,0 +1,177 @@
+---
+title: "Week 7: Correcting for unexpected or invalid values"
+author: "Lauren Nelson"
+date: "9/28/2020"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(lubridate)
+```
+
+**Example**
+Testing counts by group
+
+Goal: Calculate positivity rates by day for Group 1 and Group 2 in August 2020
+
+Columns:
+
+* test_date
+* group
+* total_tests
+* pos_tests
+* group_pop
+
+
+Import & open table 
+```{r}
+
+file_path <- "data/testing_example.xlsx"
+
+testing <- readxl::read_excel(
+  file_path,
+  na="NA"
+)
+
+#confirm total_tests is now numeric
+str(testing)
+
+```
+
+
+## CORRECTIONS
+
+1. Test dates - out of range and missing
+2. Group - invalid names, remove missing and group 3, change groups to city names
+3. Total Test - outlier; "NA" instead NA; numeric; change missing to 0
+4. Positive tests - instance where > than total_tests; set missing to 0
+
+
+**Test dates** 
+
+* out of range
+* missing 
+```{r}
+#Method 1: dplyr::filter and drop_na
+testing1a <- testing %>%
+  drop_na(test_date) %>%
+  filter(test_date >= as_date("2020-08-01") & test_date <= as_date("2020-08-31"))
+ 
+#Methood 2: filter 
+testing1b <- testing %>%
+  filter(test_date >= as_date("2020-08-01") & test_date <= as_date("2020-08-31") & !is.na(test_date))
+
+```
+
+**Group**
+
+* Invalid names
+* Remove missing and group 3
+* Change groups to city names
+```{r}
+#Method 1: if_else/case_when and recode
+groups <- testing %>%
+  select(group) %>%
+  distinct() %>%
+  pull()
+
+groups
+
+testing2a <- testing1a %>%
+  mutate(group = case_when(
+    group %in% c("group 1","1","gp one","gp 1") ~ "G1",
+    group %in% c("group 2","Gp Two") ~ "G2",
+    TRUE ~ NA_character_
+  )) %>%
+  drop_na(group) %>%
+  mutate(group = recode(group, `G1`="San Diego", `G2`="Los Angeles"))
+
+#Method 2: if_else/case_when
+testing2b <- testing1a %>%
+   mutate(group = case_when(
+    group %in% c("group 1","1","gp one","gp 1") ~ "San Diego",
+    group %in% c("group 2","Gp Two") ~ "Los Angeles",
+    TRUE ~ NA_character_
+  )) %>%
+  drop_na(group) 
+
+#Method 3: if_else/case_when & grepl
+testing2c <- testing1a %>%
+   mutate(group_cat = case_when(
+    grepl("1|one",group, ignore.case=TRUE) ~ "San Diego",
+    grepl("2|two",group, ignore.case=TRUE) ~ "Los Angeles",
+    TRUE ~ NA_character_
+  )) %>%
+  drop_na(group_cat)
+
+#confirm categories were created correctly
+table(testing2c$group_cat,testing2c$group)
+
+```
+
+**Total Test**
+
+* "NA" instead NA
+* confirm numeric
+* outlier
+* change missing values to 0
+```{r}
+
+#Method 1: Handled at import
+testing <- readxl::read_excel(
+  file_path,
+  na="NA"
+)
+
+#Method 2: Handled in mutate
+testing3 <- readxl::read_excel(
+  file_path
+)
+
+testing3a <- testing3 %>%
+  mutate(total_tests = na_if(total_tests,"NA"),
+         total_tests = as.numeric(total_tests))
+ 
+#outlier
+#Method 1: mutate, if_else using row_number or other value
+testing3b <- testing2a %>%
+  mutate(total_tests = if_else(row_number()==23, 450, total_tests)) %>%
+  replace_na(list(total_tests=0))
+```
+
+**Positive tests**
+
+* greater than total tests to missing
+* change missing to 0
+```{r}
+#Method 1: replace_na
+testing4a <- testing3b %>%
+  mutate(pos_tests = if_else(pos_tests>total_tests, NA_real_, pos_tests)) %>%
+  replace_na(list(pos_tests=0, total_tests=0))
+
+#Method 2: single if_else
+testing4b <- testing3b %>%
+  mutate(pos_tests2 = if_else(pos_tests>total_tests | is.na(pos_tests), 0, pos_tests)) 
+         
+
+```
+
+**Percent Positive**
+
+Calculate percent positive & clean up if needed
+```{r}
+
+testing5a <- testing4a %>%
+  mutate(pct_pos = round(100*pos_tests/total_tests,0))
+
+
+#clean up values that are NaN - set to 0
+testing_clean <- testing5a %>%
+  mutate(pct_pos = if_else(is.nan(pct_pos),0,pct_pos))
+
+```
+
+

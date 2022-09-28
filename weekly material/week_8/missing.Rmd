@@ -1,0 +1,170 @@
+---
+title: "Week 7 - Missing data"
+author: "Lauren Nelson"
+date: "9/27/2020"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+## Missing data 
+
+* Types
+* Properties
+
+**NA**
+
+Not Available - Logical constant indicating a missing value. Can be coerced to any other data type vector: NA_integer_, NA_real_, NA_complex_, NA_character_ 
+```{r}
+
+#NA
+a <- NA
+a
+class(a)
+length(a)
+
+#Expressions with NA always return NA
+a+1
+a>1
+# a==NA
+is.na(a)
+
+#another method for determining if values are the same or "identical"
+identical(a,NA)
+
+identical(5,5)
+
+#NA of other data types - commonly needed in if_else() and case_when()
+a_char <- NA_character_
+class(a_char)
+is.na(a_char)
+
+a_num <- NA_real_
+class(a_num)
+is.na(a_num)
+
+
+#NA vs "NA" - not the same!
+c <- "NA"
+c
+class(c)
+is.na(c)
+identical(a,c)
+
+```
+
+**NULL**
+
+Object returned when an expression or function results in an undefined value. Really an empty value. 
+```{r}
+#NULL
+b <- NULL
+b
+class(b)
+length(b)
+b+1
+is.null(b)
+
+
+#NULL vs "NULL" - not the same
+d <- "NULL"
+d
+is.null(d)
+identical(b,d)
+
+
+#NULL vs NA - also not the same!
+a <- NA
+b <- NULL
+
+is.null(a)
+is.na(b)
+identical(a,b)
+
+
+
+```
+
+**NaN**
+
+Not A Number - logical vector of a length 1 and applies to numerical values only (not integer)
+```{r}
+#generate a NaN value
+e <- sqrt(-1)
+e
+
+e+1
+
+is.nan(e)
+
+#is.na will pick up NaN values
+is.na(e)
+
+#is.nan will not pick up NA values
+is.nan(a)
+
+
+```
+
+**Infinite**
+
+Large number or a product that is a result of division by zero. 
+```{r}
+#create an infinite value
+f <- 10/0
+f
+
+-10/0
+
+is.infinite(f)
+
+#infinite are not recognized as NA
+is.na(f)
+
+```
+
+
+## Assessing missingness
+
+* Finding NA, NULL, etc.
+* Counting NA, NULL, NaN, etc.
+
+```{r}
+
+#vector with NA, NULL, and NaN
+v <- c(NA, 3, 5, NaN, NULL, NA, NaN, 6, 7)
+#print vector an notice that NULL does not appear in vector; 
+#it is not recognized as a value in the vector
+v
+length(v)
+v[5] #returns NA, not NULL
+
+#calculate mean of vector
+mean(v)
+
+#remove NA's from mean calculation
+mean(v, na.rm=TRUE)
+
+#return T/F for each element in the vector
+is.na(v)
+
+#return number of NA and NaN elements
+sum(is.na(v))
+sum(is.nan(v))
+
+#return indexes of NA values
+which(is.na(v))
+
+#create a new vector of non-NA values
+z <- v[!is.na(v)]
+z
+
+mean(z)
+
+```
+
+
