@@ -1,0 +1,101 @@
+---
+title: "live_session_3_student"
+output: pdf_document
+date: "`r Sys.Date()`"
+---
+
+## Loading in tidyverse library and setting up knitr for proper knitting
+Note: the *tidyverse* package includes all of the *dplyr*, *tibble*, *ggplot2*, *forcats*, *stringr*, *readr*, *purr*, and *tidyr* packages. Therefore, you will not need to call those individual packages if you call in the tidyverse package.
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(lubridate)
+```
+
+## Importing a file
+For this activity,  we will utilize the same dataset as used in Live Session #2, which is a dataset from the California Health and Human Services Open Data Portal (CHHS ODP) that includes COVID vaccination coverage information in CA. 
+
+To start, we will load the file.
+
+```{r import}
+# creating a file path to directly import a csv from the internet
+file_path <- "https://data.chhs.ca.gov/dataset/e283ee5a-cf18-4f20-a92c-ee94a2866ccd/resource/130d7ba2-b6eb-438d-a412-741bde207e1c/download/covid19vaccinesbycounty.csv"
+
+# import full file to see what it looks like
+vaccine_full <- read_csv(file_path)
+
+```
+
+For questions 1-3, we will use a subset of vaccine_full and created a percent boosted column. (These have all been adapted from questions in Live Session #2, so see that Rmd for more information.)
+
+```{r}
+vaccine_subset <- vaccine_full %>%
+    select(county, cumulative_booster_recip_count, booster_eligible_population, administered_date) %>%
+    filter(administered_date=="2022-10-02") %>%
+    rename(boosted= cumulative_booster_recip_count,   eligible= booster_eligible_population) %>%
+    mutate(perc_boosted= round((boosted/eligible)*100, 2))
+```
+
+\newpage
+
+## Question 1
+The goal for the state was to reach a level of 50% of the population being *boostered*. Create a new column using a *dplyr* function called *goal_met* that indicates whether or not each county met the goals of the state using the *if_else* function. Use *Y* to indicate that a level of 50% was reached and *N* to indicate that it was not reached.
+
+```{r}
+
+
+```
+
+\newpage
+
+## Question 2
+There is also interest in identifying counties that have exceeded or not exceeded the state goal. Create a new column using *case_when* to classify counties using a three-level variable called *goal_level* that classifies counties with >70% boosted as *Exceeded goal*, 50%-70% as *met goal* and <50% and *did not meet goal*.
+
+
+```{r}
+
+
+```
+
+\newpage
+
+## Question 3
+Create an additional column called *goal_level2* with the same specifications as above, but using *if_else*. Hint: You will need to use multiple if_else's to acheive this.
+
+```{r}
+
+
+```
+
+
+\newpage
+
+## Question 4
+
+Create a new dataset from vaccine_full called vaccine_2022 and filter to include only rows recording vaccines in 2022. Create a new column that converts the date to the first day of each month using floor_date(administered_date, "month"). Ensure that only the new column plus county, administered date, total doses, and booster eligible population columns are included in the resulting dataset.
+
+```{r}
+
+
+```
+\newpage
+
+## Question 5
+
+Using the vax_month variable created in question four, create a new dataset that aggregates the total doses by county and month. The aggregate sum of total doses should be a new variable called monthly_doses
+
+```{r}
+
+```
+
+
+\newpage
+
+## Question 6
+
+Using the dataset in question 5, pivot the dataset so that each month has it's own column of total doses by county. If you include the following as an argument, you can get it to display months as the column names: names_glue = "{month(vax_month, label = T)}"
+
+```{r}
+
+```
+
