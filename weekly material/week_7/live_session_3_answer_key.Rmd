@@ -1,0 +1,141 @@
+---
+title: "live_session_3_student"
+output: pdf_document
+date: "`r Sys.Date()`"
+---
+
+## Loading in tidyverse library and setting up knitr for proper knitting
+Note: the *tidyverse* package includes all of the *dplyr*, *tibble*, *ggplot2*, *forcats*, *stringr*, *readr*, *purr*, and *tidyr* packages. Therefore, you will not need to call those individual packages if you call in the tidyverse package.
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(lubridate)
+```
+
+## Importing a file
+For this activity,  we will utilize the same dataset as used in Live Session #2, which is a dataset from the California Health and Human Services Open Data Portal (CHHS ODP) that includes COVID vaccination coverage information in CA. 
+
+To start, we will load the file.
+
+```{r import}
+# creating a file path to directly import a csv from the internet
+file_path <- "https://data.chhs.ca.gov/dataset/e283ee5a-cf18-4f20-a92c-ee94a2866ccd/resource/130d7ba2-b6eb-438d-a412-741bde207e1c/download/covid19vaccinesbycounty.csv"
+
+# import full file to see what it looks like
+vaccine_full <- read_csv(file_path)
+
+```
+
+For questions 1-3, we will use a subset of vaccine_full and created a percent boosted column. (These have all been adapted from questions in Live Session #2, so see that Rmd for more information.)
+
+```{r}
+vaccine_subset <- vaccine_full %>%
+    select(county, cumulative_booster_recip_count, booster_eligible_population, administered_date) %>%
+    filter(administered_date=="2022-10-02") %>%
+    rename(boosted= cumulative_booster_recip_count,   eligible= booster_eligible_population) %>%
+    mutate(perc_boosted= round((boosted/eligible)*100, 2))
+```
+
+\newpage
+
+## Question 1
+The goal for the state was to reach a level of 50% of the population being *boostered*. Create a new column using a *dplyr* function called *goal_met* that indicates whether or not each county met the goals of the state using the *if_else* function. Use *Y* to indicate that a level of 50% was reached and *N* to indicate that it was not reached.
+
+```{r}
+vaccine_subset <- vaccine_subset %>%
+  mutate(goal_met = if_else(perc_boosted>=50,"Y","N"))
+
+```
+
+\newpage
+
+## Question 2
+There is also interest in identifying counties that have exceeded or not exceeded the state goal. Create a new column using *case_when* to classify counties using a three-level variable called *goal_level* that classifies counties with >70% boosted as *Exceeded goal*, 50%-70% as *met goal* and <50% and *did not meet goal*.
+
+
+```{r}
+vaccine_subset <- vaccine_subset %>%
+  mutate(goal_level = case_when(
+                        perc_boosted>=70 ~ "exceeded goal",
+                        perc_boosted>=50 ~ "met goal",
+                        TRUE ~ "did not meet goal"))
+
+```
+
+\newpage
+
+## Question 3
+Create an additional column called *goal_level2* with the same specifications as above, but using *if_else*. Hint: You will need to use multiple if_else's to acheive this.
+
+```{r}
+vaccine_subset <- vaccine_subset %>%
+  mutate(goal_level2 = if_else(
+                        perc_boosted>=70, 
+                        "exceeded goal",
+                          if_else(perc_boosted>=50,
+                                  "met goal",
+                                  "did not meet goal")))
+
+```
+
+
+\newpage
+
+## Question 4
+
+Create a new dataset from vaccine_full called vaccine_2022 and filter to include only rows recording vaccines in 2022. Create a new column that converts the date to the first day of each month using floor_date(administered_date, "month"). Ensure that only the new column plus county, administered date, total doses, and booster eligible population columns are included in the resulting dataset.
+
+```{r}
+
+vaccine_2022 <- vaccine_full %>%
+  filter(administered_date >= as_date("2022-01-01") & administered_date <= as_date("2022-12-31")) %>%
+  mutate(vax_month = floor_date(administered_date, "month")) %>%
+  select(county, vax_month, administered_date, total_doses, booster_eligible_population)
+
+
+```
+\newpage
+
+## Question 5
+
+Using the vax_month variable created in question four, create a new dataset that aggregates the total doses by county and month. The aggregate sum of total doses should be a new variable called monthly_doses
+
+```{r}
+
+vax_agg <- vaccine_2022 %>%
+  group_by(county, vax_month) %>%
+  summarize(monthly_doses = sum(total_doses, na.rm = T)) %>%
+  ungroup()
+
+
+```
+
+
+\newpage
+
+## Question 6
+
+Using the dataset in question 5, pivot the dataset so that each month has it's own column of total doses by county. If you include the following as an argument, you can get it to display months as the column names: names_glue = "{month(vax_month, label = T)}"
+
+```{r}
+
+vax_pivot <- vax_agg %>%
+  pivot_wider(names_from = vax_month, names_glue = "{month(vax_month, label = T)}", values_from = monthly_doses)
+
+
+```
+
+Bonus note - going back to question 5, check out the difference between group_by + summarize and group_by + mutate. Summarize usually shrinks the number of rows to only those unique combinations identified in the group_by statement.  So you are letting go of some detail in the dataset and summarizing only what you're interested in, in this case the total doses by county by month.  With mutate, you're not letting go of any detail, not reducing the rows at all.  Instead, you're adding a column with summary information to the existing dataframe structure. 
+
+```{r}
+
+vax_agg_mutate <- vaccine_2022 %>%
+  group_by(county, vax_month) %>%
+  mutate(monthly_doses = sum(total_doses, na.rm = T)) %>%
+  ungroup()
+
+# this results in a dataframe with ~17k rows and one additional column whereas the summarize dataframe results in # unqiue values in county * the number of unique values in vax_month (in October that will be 620).
+
+```
+
+Bonus bonus note - **this will _not_ be on the exam** there may be situations where you need to both mutate and summarize, especially when you need an aggregate value to serve as a denominator when to calculate a rate or percentage and then calculate a monthly average on that percentage. In these complex situations, it's best to remember what each function is for and how they are different. I will often map out in words what I need to do and then translate that into code.
