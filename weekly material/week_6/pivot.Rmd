@@ -17,15 +17,11 @@ library(stringr)
 
 demog_2010_20 <- fread("data/DOFP3_2010_2020_demo.csv")
 
-demog_2010_20 %>% head  ## Sn50  DOF = ??
-
 pivot_example <- demog_2010_20 %>%
   pivot_wider(names_from = "year", names_prefix = "year_", values_from = dof_pop)
 
 
-pivot_example %>% head(8)
-
-oshpd_payers <- fread("../../midterm/inpatient_payer_ca.csv") %>%
+oshpd_payers <- fread("data/inpatient_payer_ca.csv") %>%
   rename_all(. %>% tolower %>% gsub(" ", "_", .) %>% gsub("/", "_", .)) %>%
   mutate(county_name = str_to_title(county_name)) %>%
   as_tibble()
@@ -33,12 +29,8 @@ oshpd_payers <- fread("../../midterm/inpatient_payer_ca.csv") %>%
 pivot_example <- demog_2010_20 %>%
   pivot_wider(names_from = "year", names_prefix = "year_", values_from = dof_pop)
 
-# View(pivot_example)
-
 pivot_long_example <- pivot_example %>%
   pivot_longer(cols = starts_with("year_"), names_to = "year", values_to = "dof_pop", names_prefix = "year_")
-
-pivot_example = pivot_long_example ## Sn50 so I can use existing View() window :D
 
 oshpd_wide <- oshpd_payers %>%
   group_by(county_name, year) %>%
