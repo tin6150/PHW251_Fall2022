@@ -27,7 +27,7 @@ demog <- fread("data/CAp3_2020_demographics.csv") %>%
   group_by(county) %>%
   summarize(total_pop = sum(pop))
 
-oshpd_payers <- fread("../../midterm/inpatient_payer_ca.csv") %>%
+oshpd_payers <- fread("data/inpatient_payer_ca.csv") %>%
   rename_all(. %>% tolower %>% gsub(" ", "_", .) %>% gsub("/", "_", .)) %>%
   mutate(county_name = str_to_title(county_name)) %>%
   as_tibble() %>%
