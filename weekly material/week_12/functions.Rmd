@@ -1,0 +1,120 @@
+---
+title: "Functions Notebook"
+output: html_notebook
+---
+
+Why Functions?
+
+-  Save time (though the time saved is mostly in the future)
+-  Reduce potential errors
+
+```{r}
+
+first_function <- function(alpha, bravo) {
+  phil <- alpha + 15 * bravo
+  if(phil > 300) {TRUE}
+  return(phil)
+}
+
+first_function(alpha = 20, bravo = 30)
+
+```
+
+```{r}
+
+# if charlie > 300, we want to mulitply delta times 30
+# if not, we want to mulitply echo time 30
+
+check_value <- function(charlie, delta, echo) {
+  if(charlie > 300) {
+    phil <- delta * 30
+  } else {
+    phil <- echo * 30
+  }
+  return(phil)
+}
+
+
+check_value(250, 25, 40)
+```
+
+```{r}
+
+#Check out some documentation and how to follow it
+```
+
+[dplyr documentation](https://dplyr.tidyverse.org/reference/select.html)
+[pivot tidyr documentation](https://tidyr.tidyverse.org/reference/pivot_longer.html)
+
+```{r}
+library(readr)
+library(dplyr)
+library(magrittr)
+
+
+covid_masks <- read_csv("https://raw.githubusercontent.com/nytimes/covid-19-data/master/mask-use/mask-use-by-county.csv")
+
+# I ended up not using this, but kept it in as a fun use of 
+# mutate based on values in a vector
+
+# rural <- sample(covid_masks$COUNTYFP, 100, replace = FALSE)
+# 
+# covid_masks1 <- covid_masks %>% 
+#   mutate(class = ifelse(COUNTYFP %in% rural, "Rural", "Urban"))
+# 
+# str(covid_masks1)
+
+```
+
+
+```{r}
+
+  covid_masks$never_cat <- case_when(covid_masks$NEVER <= .2 ~ 1,
+                                   covid_masks$NEVER <= .4 ~ 2,
+                                   covid_masks$NEVER <= .6 ~ 3,
+                                   covid_masks$NEVER <= .8 ~ 4,
+                                   covid_masks$NEVER == TRUE ~ 5,)
+
+  covid_masks$rarely_cat <- case_when(covid_masks$RARELY <= .2 ~ 1,
+                                   covid_masks$RARELY <= .4 ~ 2,
+                                   covid_masks$RARELY <= .6 ~ 3,
+                                   covid_masks$RARELY <= .8 ~ 4,
+                                   covid_masks$RARELY == TRUE ~ 5,)
+  
+  covid_masks$some_cat <- case_when(covid_masks$SOMETIMES <= .1 ~ 1,
+                                   covid_masks$SOMETIMES <= .2 ~ 2,
+                                   covid_masks$SOMETIMES <= .3 ~ 3,
+                                   covid_masks$SOMETIMES <= .4 ~ 4,
+                                   covid_masks$SOMETIMES == TRUE ~ 5,)
+  
+  covid_masks$freq_cat <- case_when(covid_masks$FREQUENTLY <= .1 ~ 1,
+                                   covid_masks$FREQUENTLY <= .2 ~ 2,
+                                   covid_masks$FREQUENTLY <= .3 ~ 3,
+                                   covid_masks$FREQUENTLY <= .4 ~ 4,
+                                   covid_masks$FREQUENTLY == TRUE ~ 5,)
+  
+  covid_masks$always_cat <- case_when(covid_masks$ALWAYS <= .1 ~ 1,
+                                   covid_masks$ALWAYS <= .2 ~ 2,
+                                   covid_masks$ALWAYS <= .3 ~ 3,
+                                   covid_masks$ALWAYS <= .4 ~ 4,
+                                   covid_masks$ALWAYS == TRUE ~ 5,)
+
+# OR this way!
+    
+tx_covid <- function(mask_column) {
+  case_when(mask_column <= .2 ~ 1,
+            mask_column <= .4 ~ 2,
+            mask_column <= .6 ~ 3,
+            mask_column <= .8 ~ 4,
+            mask_column == TRUE ~ 5,)
+}
+    
+covid_masks$never_cat <- tx_covid(covid_masks$NEVER)
+covid_masks$rarely_cat <- tx_covid(covid_masks$RARELY)
+covid_masks$some_cat <- tx_covid(covid_masks$SOMETIMES)
+covid_masks$freq_cat <- tx_covid(covid_masks$FREQUENTLY)
+covid_masks$always_cat <- tx_covid(covid_masks$ALWAYS)
+
+
+```
+
