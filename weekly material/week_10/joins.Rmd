@@ -1,0 +1,78 @@
+---
+title: "Data Joins R Notebook"
+output: html_notebook
+---
+
+```{r setup}
+library(data.table)
+library(tidyr)
+library(dplyr)
+library(stringr)
+library(tidyverse)
+```
+
+## Lecture Video
+```{r}
+person_table <- read_csv("data/person_table.csv")
+transaction_table <- read_csv("data/transaction_table.csv")
+
+inner_join(x = person_table, y = transaction_table, by = "ID")
+left_join(x = person_table, y = transaction_table, by = "ID")
+```
+
+## Toolkit Video
+```{r}
+demog <- fread("data/CAp3_2020_demographics.csv") %>%
+  select(year, age, gender, race_ethnicity, county, pop, caloes_region, econ_reg) %>%
+  group_by(county) %>%
+  summarize(total_pop = sum(pop))
+
+oshpd_payers <- fread("data/inpatient_payer_ca.csv") %>%
+  rename_all(. %>% tolower %>% gsub(" ", "_", .) %>% gsub("/", "_", .)) %>%
+  mutate(county_name = str_to_title(county_name)) %>%
+  as_tibble() %>%
+  group_by(county_name, year) %>%
+  summarize(total_patients = replace_na(sum(count), 0))
+
+inner_joined <- inner_join(oshpd_payers, demog, 
+                           by = c("county_name" = "county")) %>%
+  mutate(visit_per_capita = total_patients / total_pop)
+
+# empty since years don't match
+inner_joined2 <- inner_join(oshpd_payers, demog, 
+                           by = c("county_name" = "county",  "year")) %>%
+  mutate(visit_per_capita = total_patients / total_pop)
+
+left_joined <- left_join(oshpd_payers, demog, by=c("county_name" = "county")) %>%
+  mutate(visit_per_capita = total_patients / total_pop)
+
+right_joined <- right_join(oshpd_payers, demog, by=c("county_name" = "county")) %>%
+  mutate(visit_per_capita = total_patients / total_pop)
+
+full_join <- full_join(oshpd_payers, demog, by=c("county_name" = "county")) %>%
+  mutate(visit_per_capita = total_patients / total_pop)
+
+
+
+left_joined <- left_join(oshpd_payers, demog, by=c("county_name" = "county")) %>%
+  mutate(visit_per_capita = total_patients / total_pop)
+
+left_joined <- oshpd_payers %>%
+  filter(year == 2014) %>%
+  left_join(., demog, by=c("county_name" = "county")) 
+
+
+demog_2010_20 <- fread("data/DOFP3_2010_2020_demo.csv")
+
+left_joined <- oshpd_payers %>%
+  left_join(., demog_2010_20, by=c("county_name" = "county", "year" = "year"))  %>%
+  mutate(visit_per_capita = total_patients / dof_pop)
+
+lj_2010 <- select(filter(left_joined, year == "2010"), county_name, year, visit_per_capita)
+lj_2011 <- select(filter(left_joined, year == "2011"), county_name, year, visit_per_capita)
+lj_2012 <- select(filter(left_joined, year == "2012"), county_name, year, visit_per_capita)
+
+this <- Reduce(function(...) merge(..., by='county_name', all.x=TRUE), list(lj_2010,lj_2011,lj_2012))
+
+```
+
