@@ -1,0 +1,88 @@
+---
+title: "basic_functions"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Function Basics
+
+### What is a function?
++ Backbone of R programming language, majority of things you will do in R rely on them!
++ Set of statements that performs a specific task
++ User is able to call or pass information to the function
++ Function will perform task and return object or value or action
+
+### Where do functions come from?
++ Many built into base R
++ Many many more available through different package libraries
++ Can create your own! (This will be covered later in the semester)
+
+### How are functions structured on the back-end? 
+ 
+![function structure](images/function_structure.png)
+
+
+### How are functions called (or used)?
+
+Some functions don't require any arguments, or have default values that don't need to be changed.
+  
+  **function_name()**
+
+Some will require argument values to be specified. These will both print results straight to the console.
+
+  **function_name(arg_1= x, arg_2 = y)**
+  
+  **function_name(x, y)**
+  
+The returned value can also be assigned to a new object
+
+  **new_object <- function_name(arg_1= x, arg_2 = y)**
+  
+### Example - creating a simple function:
+
+```{r example_1}
+add_together <- function(value1 = 1, value2 = 1){
+  value1 + value2
+}
+
+add_together()
+
+add_together(value1 = 200, value2 = 34)
+
+add_together(200,34)
+
+add_together(value1 = 200)
+
+```
+
+### Example - using a function in base R:
+Use seq() to generate a numeric sequence from 1 to 20
+```{r example_2}
+seq(from=1, to=20, by=1)
+
+seq(from=1, to=20, by=2)
+
+seq(from=1, to=20, length.out=10)
+
+a <- 2
+b <- 40
+
+new_seq <- seq(from=a,to=b,by=6)
+new_seq
+ 
+```
+
+### Resources for learning about specific functions
+ + Built in RStudio help
+    + Help pane
+    + typing ?_keyword_ into the console
+ + Google/online resources
+    + [rdocumentation.org](https://rdocumentation.org /packages/base/versions/3.6.2/topics/seq)
+ + Functions from package libraries
+    + Example: read_delim from readr package
+    + [Package documentation](https://readr.tidyverse.org/reference/read_delim.html)
+    + [rdocumentation.org](https://www.rdocumentation.org/packages/readr/versions/1.3.1/topics/read_delim)
+ 
