@@ -1,0 +1,282 @@
+---
+title: "Epi R Handbook tour"
+output:
+  pdf_document: default
+  html_notebook: default
+---
+
+## 19 Univariate and multivariable regression
+
+https://epirhandbook.com/en/univariate-and-multivariable-regression.html
+
+`pacman` package loads all these libraries and installs them if necessary.
+```{r include=F}
+# install.packages("pacman")
+pacman::p_load(
+  rio,          # File import
+  here,         # File locator
+  tidyverse,    # data management + ggplot2 graphics, 
+  stringr,      # manipulate text strings 
+  purrr,        # loop over objects in a tidy way
+  gtsummary,    # summary statistics and tests 
+  broom,        # tidy up results from regressions
+  lmtest,       # likelihood-ratio tests
+  parameters,   # alternative to tidy up results from regressions
+  see          # alternative to visualise forest plots
+  )
+```
+
+### Univariate
+
+Import data on cases from a simulated Ebola epidemic. 
+```{r}
+# import the linelist
+linelist <- import("linelist_cleaned.rds")
+
+## define variables of interest 
+explanatory_vars <- c("gender", "fever", "chills", "cough", "aches", "vomit")
+
+## convert dichotomous variables to 0/1 
+linelist <- linelist %>%  
+  mutate(across(                                      
+    .cols = all_of(c(explanatory_vars, "outcome")),  ## for each column listed and "outcome"
+    .fns = ~case_when(                              
+      . %in% c("m", "yes", "Death")   ~ 1,           ## recode male, yes and death to 1
+      . %in% c("f", "no",  "Recover") ~ 0,           ## female, no and recover to 0
+      TRUE                            ~ NA_real_)    ## otherwise set to missing
+    )
+  )
+
+## add in age_category to the explanatory vars 
+explanatory_vars <- c(explanatory_vars, "age_cat")
+
+## drop rows with missing information for variables of interest 
+linelist <- linelist %>% 
+  drop_na(any_of(c("outcome", explanatory_vars)))
+
+head(linelist)
+```
+
+
+
+Logistic regression on multiple binomial independent variables:
+```{r}
+univ_tab <- linelist %>% 
+  dplyr::select(explanatory_vars, outcome) %>% ## select variables of interest
+  tbl_uvregression(                         ## produce univariate table
+    method = glm,                           ## define regression want to run (generalised linear model)
+    y = outcome,                            ## define outcome variable
+    method.args = list(family = binomial),  ## define what type of glm want to run (logistic)
+    exponentiate = TRUE                     ## exponentiate to produce odds ratios (rather than log odds)
+  )
+
+## view univariate results table 
+univ_tab
+```
+
+### Multivariate
+
+No interaction between the explanatory variables (+'s only)
+```{r}
+mv_reg <- glm(outcome ~ gender + fever + chills + cough + aches + vomit + age_cat, family = "binomial", data = linelist)
+
+summary(mv_reg)
+```
+
+Interaction between age and fever:
+```{r}
+model0 <- glm(outcome ~ gender + age_cat * fever, family = "binomial", data = linelist)
+tidy(model0, exponentiate = TRUE, conf.int = TRUE)
+```
+
+Using the `plot` function from the [see](https://easystats.github.io/see/) package to visualize odds ratios.
+```{r}
+# load
+pacman::p_load(easystats)
+
+## remove the intercept term from your multivariable results
+model0 %>% 
+  model_parameters(exponentiate = TRUE) %>% 
+  plot()
+```
+
+Compare models using a likelihood ratio test:
+```{r}
+model1 <- glm(outcome ~ age_cat, family = "binomial", data = linelist)
+model2 <- glm(outcome ~ age_cat + gender, family = "binomial", data = linelist)
+
+lmtest::lrtest(model1, model2)
+```
+## 21 Standardised rates
+
+https://epirhandbook.com/en/standardised-rates.html
+
+```{r include=F}
+pacman::p_load(
+     rio,                 # import/export data
+     here,                # locate files
+     tidyverse,           # data management and visualization
+     stringr,             # cleaning characters and strings
+     frailtypack,         # needed for dsr, for frailty models
+     dsr,                 # standardise rates
+     PHEindicatormethods) # alternative for rate standardisation
+```
+
+Import and clean data. These are "fictitious population counts and death counts from country A and country B, by age (in 5 year categories) and sex (female, male)". We combine them all into one data frame.
+```{r}
+# import demographics for country A directly from Github
+A_demo <- import("https://github.com/appliedepi/epirhandbook_eng/raw/master/data/standardization/country_demographics.csv") %>% mutate(Country = "A")
+
+# fix errant "+" in age category
+A_demo$age_cat5[[18]] <- 85
+
+# import deaths for country A directly from Github
+A_deaths <- import("https://github.com/appliedepi/epirhandbook_eng/raw/master/data/standardization/deaths_countryA.csv")
+
+# import demographics for country B directly from Github
+B_demo <- import("https://github.com/appliedepi/epirhandbook_eng/raw/master/data/standardization/country_demographics_2.csv") %>% mutate(Country = "B")
+
+# import deaths for country B directly from Github
+B_deaths <- import("https://github.com/appliedepi/epirhandbook_eng/raw/master/data/standardization/deaths_countryB.csv")
+
+# import demographics for country B directly from Github
+standard_pop_data <- import("https://github.com/appliedepi/epirhandbook_eng/raw/master/data/standardization/world_standard_population_by_sex.csv")
+
+pop_countries <- A_demo %>%  # begin with country A dataset
+     bind_rows(B_demo) %>%        # bind rows, because cols are identically named
+     pivot_longer(                       # pivot longer
+          cols = c(m, f),                   # columns to combine into one
+          names_to = "Sex",                 # name for new column containing the category ("m" or "f") 
+          values_to = "Population") %>%     # name for new column containing the numeric values pivoted
+     mutate(Sex = recode(Sex,            # re-code values for clarity
+          "m" = "Male",
+          "f" = "Female"))
+
+deaths_countries <- A_deaths %>%    # begin with country A deaths dataset
+     bind_rows(B_deaths) %>%        # bind rows with B dataset, because cols are identically named
+     pivot_longer(                  # pivot longer
+          cols = c(Male, Female),        # column to transform into one
+          names_to = "Sex",              # name for new column containing the category ("m" or "f") 
+          values_to = "Deaths") %>%      # name for new column containing the numeric values pivoted
+     rename(age_cat5 = AgeCat)      # rename for clarity
+
+country_data <- pop_countries %>% 
+     left_join(deaths_countries, by = c("Country", "age_cat5", "Sex"))
+
+country_data <- country_data %>% 
+  mutate(
+    Country = fct_relevel(Country, "A", "B"),
+      
+    Sex = fct_relevel(Sex, "Male", "Female"),
+        
+    age_cat5 = fct_relevel(
+      age_cat5,
+      "0-4", "5-9", "10-14", "15-19",
+      "20-24", "25-29",  "30-34", "35-39",
+      "40-44", "45-49", "50-54", "55-59",
+      "60-64", "65-69", "70-74",
+      "75-79", "80-84", "85")) %>% 
+          
+  arrange(Country, age_cat5, Sex)
+
+standard_pop_data <- standard_pop_data %>% rename(age_cat5 = AgeGroup)
+
+# Remove specific string from column values
+standard_pop_clean <- standard_pop_data %>%
+     mutate(
+          age_cat5 = str_replace_all(age_cat5, "years", ""),   # remove "year"
+          age_cat5 = str_replace_all(age_cat5, "plus", ""),    # remove "plus"
+          age_cat5 = str_replace_all(age_cat5, " ", "")) %>%   # remove " " space
+     
+     rename(pop = WorldStandardPopulation)   # change col name to "pop", as this is expected by dsr package
+
+all_data <- left_join(country_data, standard_pop_clean, by=c("age_cat5", "Sex")) #%>% drop_na()
+all_data
+```
+
+Direct standardization using [phe_dsr](https://rdrr.io/cran/PHEindicatormethods/man/phe_dsr.html) and [phe_rate](https://rdrr.io/cran/PHEindicatormethods/man/phe_rate.html):
+```{r}
+# Calculate rates per country directly standardized for age and sex
+mortality_ds_rate_phe <- all_data %>%
+     group_by(Country) %>%
+     PHEindicatormethods::phe_dsr(
+          x = Deaths,                 # column with observed number of events
+          n = Population,             # column with non-standard pops for each stratum
+          stdpop = pop,               # standard populations for each stratum
+          stdpoptype = "field")       # either "vector" for a standalone vector or "field" meaning std populations are in the data  
+mortality_ds_rate_phe
+
+# crude rate
+all_data %>%
+     group_by(Country) %>%
+     PHEindicatormethods::phe_rate(x = Deaths, n = Population)
+```
+
+Indirect standardization. We are "calculating rates for country A using country B as the reference population" using [phr_isr](https://rdrr.io/cran/PHEindicatormethods/man/phe_isr.html):
+```{r}
+# Create reference population
+refpopCountryB <- country_data %>% 
+  filter(Country == "B") 
+
+# Calculate rates for country A indirectly standardized by age and sex
+mortality_is_rate_phe_A <- country_data %>%
+     filter(Country == "A") %>%
+     PHEindicatormethods::phe_isr(
+          x = Deaths,                 # column with observed number of events
+          n = Population,             # column with non-standard pops for each stratum
+          x_ref = refpopCountryB$Deaths,  # reference number of deaths for each stratum
+          n_ref = refpopCountryB$Population)  # reference population for each stratum
+
+mortality_is_rate_phe_A
+```
+
+## 32 Epidemic curves
+
+https://epirhandbook.com/en/ggplot-tips.html
+
+```{r include=FALSE}
+pacman::p_load(
+  rio,          # file import/export
+  here,         # relative filepaths 
+  lubridate,    # working with dates/epiweeks
+  aweek,        # alternative package for working with dates/epiweeks
+  incidence2,   # epicurves of linelist data
+  i2extras,     # supplement to incidence2
+  stringr,      # search and manipulate character strings
+  forcats,      # working with factors
+  RColorBrewer, # Color palettes from colorbrewer2.org
+  tidyverse     # data management + ggplot2 graphics
+) 
+```
+
+Same data on cases from a simulated Ebola epidemic from the regression section:
+```{r}
+head(linelist)
+```
+
+```{r}
+# create the incidence object, aggregating cases by day
+epi_day <- incidence(       # create incidence object
+  x = linelist,             # dataset
+  date_index = date_onset,  # date column
+  interval = "day"          # date grouping interval
+  )
+
+epi_day
+# plot the incidence object
+plot(epi_day)
+
+```
+```{r}
+# Weekly (Monday week by default)
+epi_wk      <- incidence(linelist, date_onset, interval = "Monday week")
+plot(epi_wk)
+
+# Monthly
+epi_month   <- incidence(linelist, date_onset, interval = "month")
+plot(epi_month)
+```
+
+
+
+
