@@ -1,0 +1,100 @@
+---
+title: "Epidemic Curves"
+author: "Manasa Susarla"
+date: '2022-11-15'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Welcome!
+
+In this module, we will explore how to create epidemic curves with the incidence2 package.
+
+After this module, students should be able to:
+
+- Create basic and stratified epidemic curves
+
+- Modify epidemic curves to represent different intervals
+
+
+```{r load library, message = FALSE, warning = FALSE}
+library(tidyverse)
+library(magrittr)
+library(pacman)
+pacman::p_load(rio)
+pacman::p_load(incidence2)
+
+```
+
+We will work with simulated Ebola epidemic data.
+
+```{r load data}
+
+Ebola_data <- import("https://github.com/appliedepi/epirhandbook_eng/raw/master/data/case_linelists/linelist_cleaned.xlsx")
+
+head(Ebola_data)
+
+```
+
+Let's move on to plotting the epidemic curve.
+
+```{r}
+##First make sure that your date column is in Date Format
+Ebola_data$date_onset <- as.Date(Ebola_data$date_onset)
+
+#Step 1: Create an incidence object
+
+epi_day <- incidence(x = Ebola_data, date_index = date_onset, interval = "day")
+
+#Step 2: Plot
+
+plot(epi_day)
+
+```
+
+We can modify how we want to aggregate our data using the "interval" argument  
+
+```{r}
+epi_month <- incidence(x = Ebola_data, date_index = date_onset, interval = "month")
+
+plot(epi_month)
+
+```
+
+We can also group by a particular category.
+
+```{r}
+age_group <- incidence(x = Ebola_data, date_index = date_onset, interval = "week", groups = age_cat, na_as_group = TRUE)
+
+plot(age_group, fill = age_cat)+
+labs(fill = "Age Category")
+
+```
+
+AGGREGATED COUNTS
+
+Let's create a dataset of weekly aggregated counts by hospital.
+
+```{r}
+count_data <- Ebola_data %>% 
+  group_by(hospital, date_hospitalisation) %>% 
+  summarize(n_cases = n()) %>% 
+  ungroup()
+
+head(count_data)
+
+```
+
+Plot the epidemic curve. 
+
+```{r}
+epi_counts <- incidence(count_data, date_index = date_hospitalisation, count = n_cases, interval = "week", groups = hospital)
+
+
+plot(epi_counts, fill = hospital)  
+
+```
+

@@ -1,0 +1,138 @@
+---
+title: "Purrr and functional programming"
+author: "Will Wheeler"
+date: "11/13/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(readr)
+library(dplyr)
+library(magrittr)
+library(purrr)
+library(readxl)
+
+
+```
+
+
+### Why use purrr and functional programming?
+
+Generally if you can write code that takes up fewer lines, reduces complexity, and follows logical progression, it makes it easier to understand and reduces likelihood of errors. 
+
+Purrr is RStudio's package for functional programming and it contains a lot of powerful tools ([here's the link to the documentation](https://purrr.tidyverse.org/)). For anyone interested in advanced programming techniques using purr and why functional programming is useful, I highly recommend watching [this video](https://www.youtube.com/watch?v=bzUmK0Y07ck) and [reading this chapter in R for Data Science](https://r4ds.had.co.nz/iteration.html).
+
+We talk a lot about the rule of three - if you have to do a thing more than three times, write a function!  Using functions make your code less susceptible to random error.  
+
+If I have to run the same process on three different data frames, if I write out code three times to handle each data frame, then if I make a change, I have to make sure I make the exact same change on each code block.  If I don't, I've introduced error.  And that kind of error can often be really hard to find.
+
+And if I can code in a way that just handles whatever file is sent my way, I have to make even fewer changes and am less susceptible to random error. (Note - you always of course have to watch out for systemic errors in your code, but that's why we include QA on datasets for analyses!)
+
+
+## Examples
+
+### Loading multiple spreadsheet sheets
+
+```{r}
+
+# Long way around
+site_file <- "data/test_sites.xlsx"
+
+siteA <- read_excel(site_file, sheet = "site_A") %>%
+  select(uniqueid, age, gender, payer, undetectable, referred)
+
+siteB <- read_excel(site_file, sheet = "site_B") %>%
+  select(uniqueid, age, gender, payer, undetectable, referred)
+
+siteC <- read_excel(site_file, sheet = "site_C") %>%
+  select(uniqueid, age, gender, payer, undetectable, referred)
+
+all_sites0 <- bind_rows(siteA, siteB, siteC)
+
+```
+
+Let's say I want to add a previous_visit data point, but I only remember to do it on two of the datasets
+
+```{r}
+
+# Long way around
+site_file <- "data/test_sites.xlsx"
+
+siteA <- read_excel(site_file, sheet = "site_A") %>%
+  select(uniqueid, age, gender, payer, undetectable, previous_visit, referred)
+
+siteB <- read_excel(site_file, sheet = "site_B") %>%
+  select(uniqueid, age, gender, payer, undetectable, previous_visit, referred)
+
+siteC <- read_excel(site_file, sheet = "site_C") %>%
+  select(uniqueid, age, gender, payer, undetectable, referred)
+
+all_sites0 <- bind_rows(siteA, siteB, siteC)
+
+```
+
+This is just an example, but if I don't notice that, I could be in big trouble.
+
+# A better way around
+
+```{r purrr_way}
+import_sheets <- c("site_A", "site_B", "site_C")
+
+
+all_sites3 <- map_df(import_sheets, 
+                           ~read_excel(site_file, sheet = .x) %>%
+                            select(uniqueid, age, gender, payer, previous_visit, undetectable, referred)
+)
+
+# Even a little fancier - excel_sheets() function will pull in all sheets in a file, so you don't even have to create import sheets!
+# Note that they don't even necessarily have the same headers - you can use the recode() function to rename columns into standard names
+
+all_sites4 <- map_df(excel_sheets("data/test_sites.xlsx"),
+                     ~read_excel(site_file, sheet = .x) %>%
+                       select(uniqueid, age, gender, payer, previous_visit, undetectable, referred) %>%
+                       mutate(age_cat = case_when(age %in% c(0:24) ~ "< 25",
+                                                  age %in% c(25:49) ~ "25-49",
+                                                  age %in% c(50:150) ~ "> 50"))
+)
+
+
+
+```
+
+## How about another example that might help in an epi/biostats milieu?
+
+Let's say I wanted to run a model on a number of datasets
+
+```{r}
+
+# create three distinct data frames one for each unique value of the cyl column - results in a list of dataframes
+
+test <- mtcars %>%
+  split(.$cyl)
+
+# generate a linear model of mpg as a function of wt for each cyl data frames
+
+test <- mtcars %>%
+  split(.$cyl) %>%
+  map(~ lm(mpg ~ wt, data = .x)) 
+
+# from that resulting list, pull out the model summary for each
+
+test <- mtcars %>%
+  split(.$cyl) %>%
+  map(~ lm(mpg ~ wt, data = .x)) %>%
+  map(summary) 
+
+# from that resulting list, pull out only the r.squared values (you could pull out whatever you need to evaluate)
+
+test <- mtcars %>%
+  split(.$cyl) %>%
+  map(~ lm(mpg ~ wt, data = .x)) %>%
+  map(summary) %>%
+  map_dbl("r.squared")
+
+test
+```
+
