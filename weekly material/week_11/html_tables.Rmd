@@ -46,9 +46,9 @@ datatable(std_tbl,
           ) %>%
           formatRound(2:4,0) %>%
           formatStyle(1,color="blue") %>%
-          formatStyle(2:4,backgroundColor = styleInterval(c(500),c('white','yellow')))
+          formatStyle(2:4,backgroundColor = styleInterval(c(50),c('white','yellow')))
 
-
+##Sn50 the c(500) has to deal with value in the cell... a conditional...   i changed to c(50) for test.
 ```
 
 ## formattable

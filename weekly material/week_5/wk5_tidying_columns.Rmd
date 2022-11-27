@@ -31,6 +31,9 @@ ids <- read_csv(
 #check out table structure/types
 str(ids)
 
+## Sn50 for R.html
+tbl = ids
+str(tbl)
 ```
 
 **select()**
@@ -48,6 +51,11 @@ str(ids)
 id_sub <- select(ids, !Rate)
 id_sub <- select(ids, -Rate)
 
+ids %>% head(3)
+id_sub %>% head(3)
+new_tbl = select(tbl, !Rate)
+
+
 #drop lower and upper ci
 id_sub <- select(ids,-contains("CI"))
 #or
@@ -62,7 +70,7 @@ id_sub <- select(ids,Disease:Population)
 #select and change order of columns
 id_sub <- select(ids,c(Population,Disease,County,Year,Sex,Cases))
 
-
+id_sub %>% head(5)
 
 ```
 
@@ -75,6 +83,8 @@ create a vector from column values
 diseases <- id_sub %>%
   distinct(Disease) %>%
   pull(Disease)
+
+diseases %>% head(3)
 
 #since there is only one column, could also use 
 diseases <- id_sub %>%

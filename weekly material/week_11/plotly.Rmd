@@ -3,6 +3,9 @@ title: "Plotly"
 output: html_document
 ---
 
+// if try to create pdf_document, render will fail
+// output: pdf_document
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 

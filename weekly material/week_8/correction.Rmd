@@ -87,8 +87,15 @@ testing2a <- testing1a %>%
     TRUE ~ NA_character_
   )) %>%
   drop_na(group) %>%
+  ##mutate(group = recode(group, "G1"="San Diego", "G2"="Los Angeles"))
   mutate(group = recode(group, `G1`="San Diego", `G2`="Los Angeles"))
 
+testing2a
+
+
+
+## Sn50
+## - `Grp1` can be replaced with "Grp1".  R handle 3 types of quotes?  " ' and `
 #Method 2: if_else/case_when
 testing2b <- testing1a %>%
    mutate(group = case_when(
@@ -97,6 +104,9 @@ testing2b <- testing1a %>%
     TRUE ~ NA_character_
   )) %>%
   drop_na(group) 
+
+
+
 
 #Method 3: if_else/case_when & grepl
 testing2c <- testing1a %>%
@@ -119,6 +129,9 @@ table(testing2c$group_cat,testing2c$group)
 * outlier
 * change missing values to 0
 ```{r}
+
+
+
 
 #Method 1: Handled at import
 testing <- readxl::read_excel(

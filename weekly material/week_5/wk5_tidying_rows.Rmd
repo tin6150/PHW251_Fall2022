@@ -60,10 +60,14 @@ Extract (or subset) rows from table based on column/variable values
 # Population >100000
 # 2018
 
+
+
 #filter where disease is Salmonellosis or Listeriosis
 id_sub <- filter(ids, Disease %in% c("Salmonellosis","Listeriosis"))
 #or
 id_sub <- filter(ids, Disease=="Salmonellosis" | Disease=="Listeriosis")
+##### ids is the name of the "table"
+#View(id_sub)
 
 #filter where disease is Salmonellosis or Listeriosis and total sex (don't need male or female)
 id_sub <- filter(ids, Disease %in% c("Salmonellosis","Listeriosis") & Sex=="Total" )
@@ -89,6 +93,8 @@ id_sub_b <- filter(ids, between(Year,2017,2018) )
 #keep rows that are not missing rate
 id_sub_c <- filter(ids, !is.na(Rate))
 
+#View(id_sub_c)
+
 ```
 
 **slice()**
@@ -103,6 +109,8 @@ id_sub_c <- filter(ids, !is.na(Rate))
 #from data for all counties, for 2018, Listeriosis
 lister_2018 <- filter(ids,Year==2018 & Disease=="Listeriosis" & Sex=="Total")
 
+##View(lister_2018)
+
 #slice using : 
 lister_2018a <- slice(lister_2018, 15:n())
 
@@ -112,6 +120,14 @@ lister_2018b <- slice(lister_2018, c(5,10,15,20,25))
 #slice_head
 lister_head <- slice_head(lister_2018,n=10)
 
+lister_head2 = head(lister_2018,10)
+
+## Sn50
+lister_head == lister_head2 
+## arg... this does a row-wise comparison
+str(lister_head)
+str(lister_head2)
+
 #slice_tail
 lister_tail <- slice_tail(lister_2018,n=10)
 
@@ -120,7 +136,10 @@ lister_max <- slice_max(lister_2018, order_by=Cases, n=10, with_ties = FALSE)
 
 #slice_min
 lister_min <- slice_min(lister_2018, order_by=Cases, n=3, with_ties = TRUE)
+lister_min <- slice_min(lister_2018, order_by=Cases, n=3, with_ties = F)
 
+
+##View(lister_max)
 
 ```
 
@@ -155,6 +174,8 @@ id_distinct <- distinct(id_sub, County, .keep_all=TRUE)
 #return unique county and disease combinations
 id_distinct <- distinct(id_sub, County, Disease)
 
+## id_distinct = sample_n(id_distinct, size=3)
+
 ```
 
 
@@ -169,6 +190,14 @@ id_add <- id_distinct %>%
   add_row(Disease = "E. Coli", County = "San Diego") %>%
   add_row(County = "Orange")
 
+new_row = list( Disease="E. Coli", County="San Diego" )
+id_add2 = rbind(id_distinct, new_row)
+
+tbl = ids
+add_row(tbl, Disease = "E. Coli", County = "San Diego")
+
+
+tbl %>% arrange(desc(Disease), desc(Cases)) 
 
 ```
 

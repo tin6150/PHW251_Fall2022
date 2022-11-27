@@ -11,10 +11,23 @@ library(stringr)
 library(tidyverse)
 ```
 
+### Sn50 r4ds ch13 readings practice (also R.html)
+
+```{r ### Sn50 r4ds ch13 readings practice (also R.html)}
+
+library(nycflights13)
+result = flights %>% left_join( airlines, by="carrier" )
+
+#View(result)
+
+```
+
 ## Lecture Video
 ```{r}
 person_table <- read_csv("data/person_table.csv")
 transaction_table <- read_csv("data/transaction_table.csv")
+
+
 
 inner_join(x = person_table, y = transaction_table, by = "ID")
 left_join(x = person_table, y = transaction_table, by = "ID")
@@ -27,6 +40,20 @@ demog <- fread("data/CAp3_2020_demographics.csv") %>%
   group_by(county) %>%
   summarize(total_pop = sum(pop))
 
+demog
+
+# python_number = 1_234 # nope
+
+Sn50_tmp = fread("data/inpatient_payer_ca.csv")
+str(Sn50_tmp)
+#View(Sn50_tmp)
+
+Sn50_tmp2 = Sn50_tmp %>%
+  rename_all(. %>% tolower %>% gsub(" ", "__", .) %>% gsub("-", "_", .))
+#View(Sn50_tmp2)
+str(Sn50_tmp2)
+
+
 oshpd_payers <- fread("data/inpatient_payer_ca.csv") %>%
   rename_all(. %>% tolower %>% gsub(" ", "_", .) %>% gsub("/", "_", .)) %>%
   mutate(county_name = str_to_title(county_name)) %>%
@@ -37,6 +64,9 @@ oshpd_payers <- fread("data/inpatient_payer_ca.csv") %>%
 inner_joined <- inner_join(oshpd_payers, demog, 
                            by = c("county_name" = "county")) %>%
   mutate(visit_per_capita = total_patients / total_pop)
+
+
+#View(oshpd_payers)
 
 # empty since years don't match
 inner_joined2 <- inner_join(oshpd_payers, demog, 
@@ -68,11 +98,27 @@ left_joined <- oshpd_payers %>%
   left_join(., demog_2010_20, by=c("county_name" = "county", "year" = "year"))  %>%
   mutate(visit_per_capita = total_patients / dof_pop)
 
+
+
+# 1:46 of last video of week 10
+
 lj_2010 <- select(filter(left_joined, year == "2010"), county_name, year, visit_per_capita)
 lj_2011 <- select(filter(left_joined, year == "2011"), county_name, year, visit_per_capita)
 lj_2012 <- select(filter(left_joined, year == "2012"), county_name, year, visit_per_capita)
 
+lj_2010
+
+# reduce fn
+# take list of data set, and apply a fn to it.
+# purrr, apply, 
+# merge() is effectively an inner_join
+
 this <- Reduce(function(...) merge(..., by='county_name', all.x=TRUE), list(lj_2010,lj_2011,lj_2012))
+
+this # just stupid variable name
+
+reduce_result = Reduce(function(...) left_join(..., by='county_name' ), list(lj_2010,lj_2011,lj_2012))
+reduce_result
 
 ```
 

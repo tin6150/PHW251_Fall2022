@@ -21,6 +21,8 @@ flights_mean_delay <- flights %>%
   group_by(carrier) %>%
   summarize(delay_avg = mean(dep_delay, na.rm = TRUE)) 
 
+## View(flights_mean_delay)
+
 
 #Summarize multiple groups
 

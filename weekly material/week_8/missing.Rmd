@@ -67,7 +67,14 @@ b
 class(b)
 length(b)
 b+1
+b
+bbb=b+1
+bbb
 is.null(b)
+
+is.na(b)
+
+is.na(NULL)
 
 
 #NULL vs "NULL" - not the same
@@ -85,6 +92,9 @@ is.null(a)
 is.na(b)
 identical(a,b)
 
+n = NULL
+m = n + 10
+m
 
 
 ```
@@ -107,6 +117,7 @@ is.na(e)
 #is.nan will not pick up NA values
 is.nan(a)
 
+-1/0
 
 ```
 
@@ -165,6 +176,29 @@ z
 
 mean(z)
 
+
+
+
+myMessyVect3 = c("apple", NULL, 30, NA, 50, sqrt(-1), NA )
+str(myMessyVect3)
+length(myMessyVect3)
+myMessyVect3
+
+which(is.na(myMessyVect3))
+is.na(myMessyVect3)
+is.nan(myMessyVect3)
+
+sum(is.na(myMessyVect3))
+sum(is.nan(myMessyVect3))
+
+
+myCleanVect = myMessyVect3[ !is.na(myMessyVect3) ]
+myCleanVect
+
+mean( myMessyVect3 )
+
+myNoNaVect = myMessyVect3[ !is.na(myMessyVect3) ]
+mean( myMessyVect3, na.rm=TRUE )
 ```
 
 

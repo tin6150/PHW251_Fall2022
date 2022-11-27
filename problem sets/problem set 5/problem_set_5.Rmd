@@ -1,8 +1,10 @@
 ---
 title: 'PHW251 Problem Set #5'
-author: "NAME HERE"
-date: "DATE HERE"
-output: pdf_document
+author: "Tin Ho"
+date: "2022-10-09"
+output:
+  pdf_document: default
+  word_document: default
 ---
 
 At this point in the course we have introduced a fair amount of code, which can be a lot to hold in our memory at once! Thankfully we we have search engines and these [helpful cheatsheets](https://rstudio.com/resources/cheatsheets/). You may find the Base R and Data Transformation Cheatsheet helpful.
@@ -23,6 +25,17 @@ Use the readxl library and load two data sets from the "two_data_sheets" file. T
 
 ```{r, echo=T, results="markup"}
 # your code here
+library(readxl)
+data_file_path = "data/two_data_sheets.xlsx"
+rxn_time   = read_xlsx( data_file_path, sheet=1 )
+home_visit = read_xlsx( data_file_path, sheet=2 )
+
+str(rxn_time)
+str(home_visit)
+
+# View( rxn_time )
+# View( home_visit )
+
 ```
 
 \newpage
@@ -33,6 +46,9 @@ For the rats data, pivot the data frame from wide to long format. We want the 1,
 
 ```{r}
 # your code here
+rxn_long = rxn_time %>% pivot_longer( c('1','2','3'), names_to="cheese_amount", values_to="time")
+head(rxn_long)
+
 ```
 
 \newpage 
@@ -43,6 +59,11 @@ Use `summarize()` to compute the mean and standard deviation of the maze time de
 
 ```{r}
 # your code here
+result = rxn_long %>% 
+  summarize( mean_time=mean(time),
+             std_dev_time=sd(time) )
+
+result
 ```
 
 \newpage
@@ -53,6 +74,14 @@ The home visits data is a record of how and where some interviews were conducted
 
 ```{r}
 # your code here
+home_visit_wide = home_visit %>%
+  pivot_wider( 
+    names_from  = "action",  # "col_that_becomes_new_col_names" (would get as many new col as uniq values in the named col)
+    values_from = "count"    #"col_with_data" 
+    )
+
+home_visit_wide
+
 ```
 \newpage
 
@@ -67,8 +96,12 @@ All NYC children are required to be tested for lead poisoning at around age 1 an
 ```{r loading, include=F}
 file_path <- "data/Children_Under_6_yrs_with_Elevated_Blood_Lead_Levels__BLL_.csv"
 bll_nyc <- read_csv(file_path) %>% drop_na()
+
 colnames(bll_nyc) <- c("borough_id", "time_period", 
                        "bll_5", "bll_10", "bll_15", "total_tested")
+
+# View(bll_nyc)
+str(bll_nyc)
 
 ```
 
@@ -78,6 +111,8 @@ Recreate the below table with the "kable" pacakge.
 
 ```{r}
 knitr::include_graphics('data/question_1_table.png')
+
+
 ```
 
 You will need to calculate the BLL per 1,000, filter for years 2015-2016, and rename the boroughs based on the following coding scheme:
@@ -91,22 +126,93 @@ You will need to calculate the BLL per 1,000, filter for years 2015-2016, and re
 First, filter your dataframe for the years 2015-2016 and rename the boroughs. If you make your borough names a factor, it will make your life easier when we create tables and graphs.
 ```{r}
 # your code here
+
+## there are 8 rows of data for borough_id=1 for 2015, 
+## i guess  multiple test centers in the same borough
+## thus need to add these rows up for summary data
+
+nyc_borough_id = c( 1:5 )
+nyc_borough_name = c( "Bronx", "Brooklyn", "Manhattan", "Queens", "Staten Island" )
+
+draft_test_only_nyc_borough_fct = 
+  factor( bll_nyc$borough_id, levels=nyc_borough_id, labels=nyc_borough_name ) 
+
+
+Step1 = bll_nyc %>% 
+    mutate( borough_fac = 
+              factor( bll_nyc$borough_id, 
+                      levels=nyc_borough_id, 
+                      labels=nyc_borough_name )  ) %>%
+    filter( time_period %in% c(2015,2016) ) 
+
+# View(Step1)
+
 ```
 
 Second, group and summarize the data to calculate the total *number* of children in each borough in each year that were tested and the number with blood lead levels that were greater than 5 mcg/dL, 10 5 mcg/dL, and 15 5 mcg/dL.
 ```{r}
 # your code here
+
+Step2 = Step1 %>% group_by( borough_fac, time_period ) %>% 
+  summarize( sum_tested = sum( total_tested ),
+             sum_bll_5  = sum( bll_5 ),
+             sum_bll_10 = sum( bll_10 ),
+             sum_bll_15 = sum( bll_15 ),
+             )
+
+bll_kab = Step2
+# View( bll_kab )
+
 ```
 
 Third, calculate the rate at which each blood lead level occurred in each year in each borough (BLL per 1,000).
 ```{r}
 # your code here
+
+Step3 = Step2 %>% mutate(
+  rate_bll_5  = sum_bll_5  / sum_tested * 1000,
+  rate_bll_10 = sum_bll_10 / sum_tested * 1000,
+  rate_bll_15 = sum_bll_15 / sum_tested * 1000,
+)
+
+bll_kab = Step3 %>% select(
+  borough_fac,
+  time_period,
+  rate_bll_5,
+  rate_bll_10, 
+  rate_bll_15,
+)
+
 ```
 
 Now we have calculated all the numbers we need to recreate the table shown at the beginning of this question. Use `kable()` to produce your table.
 ```{r}
 # your code here
+
+
+kable(bll_kab, 
+      booktabs=T,
+      escape=F,
+      digits=1,
+      col.names=c('Borough','Year','BLL>5mcg/dL','BLL>10mcg/dL','BLL>15mcg/dL'),
+      align = "llccl",
+      
+      caption = "BLL Rates per 1,000 tested in New York City, 2015-2016",
+      format="latex",
+      #format="pipe"
+     ) %>%
+row_spec( 0, bold=T )     %>% # bold text for row #0
+sub("\\\\toprule", "", .) %>%
+sub("\\\\midrule", "", .) %>%
+sub("\\\\bottomrule", "", .) 
+# kable knitting to PDF was a bit annoying, screen output does not patch latex :-\
+# the rule lines were removed per 
+# https://edstem.org/us/courses/25507/discussion/1911419
+
+# sorry, used mcg as my computer had problem knitting the greek letter mu.
 ```
+
+
 
 
 \newpage
@@ -127,11 +233,42 @@ knitr::include_graphics('data/question_2_bar.png')
 First, summarize the original dataset.
 ```{r}
 # your code here
+StepG1 = bll_nyc %>%
+    mutate( borough_fac =
+              factor( bll_nyc$borough_id,
+                      levels=nyc_borough_id,
+                      labels=nyc_borough_name )  )  
+
+StepG2 = StepG1 %>% group_by( borough_fac ) %>%
+  summarize( sum_bll_5  = sum( bll_5 ) ) 
+  
+plotdat = StepG2
+plotdat
+
 ```
 
 Then make the graph!
 ```{r}
 # your code here
+
+plotdat %>%
+ggplot( 
+       aes(x=fct_reorder(borough_fac, sum_bll_5),
+           y=sum_bll_5, 
+       )) +
+  geom_bar( stat="identity",
+           color = "#003884",  # blue, border, has to go first
+           fill  = "#ff6600",  # orange fill the main bar
+           lwd   = 1
+            ) + 
+  labs( x="boroughs", 
+        y="counts of BLL > 5mcg/dL",
+        title="New York City: Elevated Blood Lead Levels 2005-2016 by Borough") +
+  theme_minimal() # +
+  # theme(panel.border=element_rect(color="black",size=1))
+  # pff... above create the border, but then the rest ofthe graph is blank :-\
+  
+
 ```
 
 

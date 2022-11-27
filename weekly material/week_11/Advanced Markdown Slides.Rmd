@@ -110,19 +110,24 @@ covid_df <- read_csv("https://data.chhs.ca.gov/dataset/f333528b-4d38-4814-bebb-1
          test_roll = frollsum(total_tests, 7, hasNA = T)/7
          )
 
-        fig1 <- plot_ly(data = covid_df) %>%
-            add_trace(x = ~date, y = ~cases, type = 'bar', name = 'Cases per day',
-                                     marker = list(color = 'rgb(187, 216, 228)'),
-                                     hoverinfo = "text",
-                                     text = ~paste(round(cases, 0), ' cases')) %>%
-             add_trace(x = ~date, y = ~case_roll, type = 'scatter', mode = 'lines', name = 'Average Cases', 
-                                     line = list(color = '#345B6B'),
-                                     hoverinfo = "text",
-                                     text = ~paste(round(case_roll, 1), ' average cases')
+fig1 <- plot_ly(data = covid_df) %>%
+  add_trace(x = ~date, y = ~cases, type = 'bar', name = 'Cases per day',
+                         marker = list(color = 'rgb(187, 216, 228)'),
+                         hoverinfo = "text",
+                         text = ~paste(round(cases, 0), ' cases')) %>%
+
+  add_trace(x = ~date, y = ~case_roll, type = 'scatter', mode = 'lines', name = 'Average Cases', 
+                         line = list(color = '#345B6B'),
+                         hoverinfo = "text",
+                         text = ~paste(round(case_roll, 1), ' average cases')
              ) %>% 
-            layout(legend = list(x = 0.1, y = 0.9))
+  
+  layout(legend = list(x = 0.1, y = 0.9))
+
+
+
         
-        fig1
+fig1
         
 ```
 

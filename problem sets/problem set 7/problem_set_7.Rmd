@@ -1,7 +1,7 @@
 ---
 title: "PHW251 Problem Set 7"
-author: "NAME HERE"
-date: "DATE HERE"
+author: "Tin Ho"
+date: "2022-11-11"
 output: pdf_document
 ---
 
@@ -39,11 +39,24 @@ We have grouped the questions below to push you to perform commands with less co
 ```{r, include=F}
 # load your data
 df_motor <- read_csv("data/Motor_Vehicle_Collisions_Crashes.csv")
+
 ```
 
 
 ```{r}
 # YOUR CODE HERE
+# Q1,2,3:
+df_motor_q1 = df_motor %>%
+  rename_all( . %>% tolower %>% gsub( " ", "_", . )  
+            ) %>%
+  select( crash_date, 
+          number_of_persons_injured,
+          contributing_factor_vehicle_1,
+          vehicle_type_code_1 ) %>%
+  drop_na()
+
+str(df_motor_q1)
+
 ```
 
 \newpage
@@ -52,6 +65,27 @@ df_motor <- read_csv("data/Motor_Vehicle_Collisions_Crashes.csv")
 
 ```{r}
 # YOUR CODE HERE
+
+# Q4.... Make the values in the vehicle_type_code_1 variable 
+# all lowercase and replace the spaces with a dash.
+df_motor_q1$vehicle_type_code_1   = 
+  str_replace_all( df_motor_q1$vehicle_type_code_1, " ", "-"  ) 
+
+df_motor_q1$vehicle_type_code_1 = 
+  tolower( df_motor_q1$vehicle_type_code_1 ) 
+
+#5. Filter the data for vehicles that have a count of at least 500 
+#   (appear in the data set 500 times or more)
+#   + Hints: group_by(), mutate(), n(), filter()
+
+df_motor_q5 = df_motor_q1 %>%
+  group_by( vehicle_type_code_1 ) %>%
+  count( vehicle_type_code_1 ) %>%
+  filter( n >= 500 )
+
+df_motor_q5 %>% head
+
+
 ```
 
 \newpage
@@ -60,12 +94,31 @@ df_motor <- read_csv("data/Motor_Vehicle_Collisions_Crashes.csv")
 
 ```{r}
 # YOUR CODE HERE
+#6. Calculate the percentage of accidents by vehicle type
+
+## so this is % after having filter for n >= 500, 
+## NOT % as calculated from the full data set.
+## keeping it this way cuz the questions were sequentially numbered this way.
+
+total_cases = sum(df_motor_q5$n)
+
+df_motor_q6 = df_motor_q5 %>% 
+  mutate( pct = round( n/total_cases * 100, 2)  )
+
+df_motor_q6 %>% head
+
+#7. Which vehicle group accounted for 1.55% (0.0155) of the accidents?
+
+df_motor_q6 %>% 
+  filter( pct == 1.55 )
+
 ```
 
 ### Question 7
 
 WRITE YOUR ANSWER HERE
 
+_bus_
 
 \newpage
 
@@ -82,6 +135,11 @@ patients <- read_csv("data/patients.csv")
 visits <- read_csv("data/visits.csv")
 doctors <- read_csv("data/doctors.csv")
 schedule <- read_csv("data/schedule.csv")
+
+patients  %>% head()
+visits    %>% head()
+schedule  %>% head()
+
 ```
 
 ### Question 8
@@ -92,35 +150,74 @@ Which kind of join do you use?
 
 WRITE YOUR ANSWER HERE
 
+_inner join_
+
 How many observations do you see in your joined data set? Notice that some patients have multiple visits.
 
 ```{r}
 # YOUR CODE HERE
+
+patient_schedule = 
+  inner_join( 
+              x = patients, 
+              y = schedule,
+              by = "patient_id"
+              )
+
+# right_join => 124 rec
+# inner_join => 124 rec # still same result cuz schedule always have valid patient_id
+
+
+#str( patient_schedule ) # 124 rec
+num_obs =  patient_schedule %>% tally()
+as.numeric( num_obs )
+
 ```
 
 WRITE YOUR ANSWER HERE
 
+_124_
 
 \newpage
 
 ### Question 9
 
 In the visits data, we have a variable called "follow_up" where Y means
-a follow-up is needed and N means a follow-up is not needed. How many patients require a follow-up? You will want to first make a join and then subset. Start with the data frame created in the previous question.
+a follow-up is needed and N means a follow-up is not needed. How many patients require a follow-up? 
+You will want to first make a join and then subset. Start with the data frame created in the previous question.
 
 ```{r}
 # YOUR CODE HERE
+
+patient_schedule_visit =
+  inner_join( 
+              x = patient_schedule,
+              y = visits,
+              by = "visit_id" )  
+
+# full_join  => 124 rec, some has NA in follow_up
+# inner_join => 109 rec, no NA
+  
+follow_up = 
+  patient_schedule_visit %>%
+    filter( follow_up == "Y" ) 
+
+num_follow_up = follow_up %>% tally()
+as.numeric( num_follow_up )
+
 ```
 
 Which join did you use?
 
 WRITE YOUR ANSWER HERE
 
+_inner join_
+
 How many patients need a follow-up?
 
 WRITE YOUR ANSWER HERE
 
-
+_27_
 
 \newpage
 
@@ -131,13 +228,23 @@ doctor's name.
 
 ```{r}
 # YOUR CODE HERE
+
+doc_follow = 
+  inner_join( 
+              x = doctors,
+              y = follow_up,
+              by = "doctor_id"  )
+
+doc_follow %>% pull( doctor ) %>% unique()
+
+
 ```
 
 Which join did you use?
 
 WRITE YOUR ANSWER HERE
 
-
+_inner join_
 
 
 
