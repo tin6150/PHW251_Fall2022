@@ -1,7 +1,7 @@
 ---
 title: "PHW251 Midterm Exam (Fall 2022)"
-author: "NAME HERE"
-date: "DATE HERE"
+author: "Tin Ho"
+date: "2022-10-22"
 output: pdf_document
 ---
 
@@ -47,6 +47,7 @@ D.  y<x
 
 
 **ANSWER HERE:** 
+**C**
 
 \newpage
 
@@ -60,6 +61,7 @@ C.    as_date(my_date) + months(1) - days(1)
 D.    ceiling_date(as_date(my_date), "month") %m-% days(1)
 
 **ANSWER HERE:** 
+**D**
 
 \newpage
 
@@ -75,6 +77,7 @@ C.    city in c("Los Angeles","Santa Barbara", "San Bernardino", "San Diego")
 D.    city %in% c("Los Angeles","Santa Barbara", "San Bernardino", "San Diego")
 
 **ANSWER HERE:** 
+**D**
 
 \newpage
 
@@ -90,6 +93,7 @@ C.    seq(6, 30, length.out=5)
 D.    multiple(6, 30)
 
 **ANSWER HERE:** 
+**C**
 
 \newpage
 
@@ -116,6 +120,7 @@ D.    ggplot(data = mpg, mapping = aes(x = hwy, y = displ)) %>%
         geom_smooth()
 
 **ANSWER HERE:** 
+**B**
 
 \newpage
 
@@ -135,6 +140,7 @@ C.    length(multi_list[["Matrix"]])
 D.    multi_list[[1]][4]
 
 **ANSWER HERE:** 
+**C**
 
 \newpage
 
@@ -148,6 +154,7 @@ C.    Both data frames and tibbles have row names
 D.    The output will include the data type for each column when printing a tibble, which is not the case when printing data frames
 
 **ANSWER HERE:** 
+**B,D**
 
 \newpage
 
@@ -163,7 +170,7 @@ C.    df[which(df$county=="IDN"),]
 D.    df[2, ]
 
 **ANSWER HERE:** 
-
+**D**
 
 \newpage
 
@@ -179,6 +186,7 @@ C.    `df %>% filter(year==2021 & cases <30)`
 D.    `subset(df,year==2021 & cases < 30)`
 
 **ANSWER HERE:** 
+**B**
 
 \newpage
 
@@ -219,6 +227,7 @@ D. if(tempC >= 30) {
     print("just right")}
 
 **ANSWER HERE:** 
+**D**
 
 
 \newpage
@@ -252,17 +261,20 @@ What are the data types of each column when you read the data into R (numeric, f
 
 **ANSWER HERE:**
 
--   Year: ________ 
--   YOSHPD ID: _______ 
--   Facility Name: _______ 
--   County Name: _______ 
--   ER Service Level Desc: _______ 
--   Type: _______ 
--   Count: _______ 
+-   Year: ____numeric____ 
+-   YOSHPD ID: ____numeric___ 
+-   Facility Name: ____character____ 
+-   County Name: ____character___ 
+-   ER Service Level Desc: ____character____ 
+-   Type: _____character___ 
+-   Count: ____numeric____ 
 
 ```{r q11a_work, echo=T}
 
+ed_path = 'data/ed_facility_ca.csv'
+ed_tib = read_csv( ed_path )
 
+str(ed_tib)
 
 ```
 
@@ -274,10 +286,16 @@ Notice the column names are not reading in in  very user-friendly way. Rename al
 Paste the new column names **and** the line(s) of code you used to change them below. **[1 pt]**
 
 **ANSWER HERE:**  
+"year"                  "oshpd_id"              "facility_name"         
+"county_name"           "er_service_level_desc"
+type"                   "count"     
 
+ed_tib2 = ed_tib %>% rename_with( ~ tolower( gsub(" ","_", .x, fixed=TRUE) ))
 
 ```{r q12_work, echo=T}
 
+ed_tib2 = ed_tib %>% rename_with( ~ tolower( gsub(" ","_", .x, fixed=TRUE) ))
+colnames(ed_tib2)
 
 ```
 
@@ -293,11 +311,15 @@ Using the dataset from question 12, create a new data frame that limits the data
 How many records are in the new subsetted dataset? **[1 pt]**
 
 **ANSWER HERE:** 
+**3340**
 
 ```{r q13_work, echo=T}
 
-
-
+ed_tib3 = ed_tib2 %>% filter(
+  str_to_lower( er_service_level_desc ) == "basic" &
+  year >= 2015 & year <= 2020  
+)
+length(ed_tib3$oshpd_id)
 ```
 
 \newpage
@@ -311,11 +333,20 @@ _(Hint: After adding this column your data frame should contain the same number 
 What is the value of `total_encounters` for Alameda Hospital in 2020? **[1 pt]**
 
 **ANSWER HERE:** 
+**12115**
+
 
 ```{r q14a_work, echo=T}
+ed_tib4 = ed_tib3 %>% 
+  group_by( oshpd_id, year ) %>% 
+  summarize( total_encounter = sum( count ), 
+             count, type, facility_name, county_name, er_service_level_desc )  
 
+# double check against hint, indeed still have 3340 rows
+length(ed_tib4[[1]])   
 
-
+# What is the value of `total_encounters` for Alameda Hospital in 2020?
+ed_tib4[which( ed_tib4$facility_name=="ALAMEDA HOSPITAL" & ed_tib4$year==2020), ] 
 ```
 
 \newpage
@@ -327,10 +358,22 @@ Then create another new column called `pct_encounter_type` that calculates the p
 What is the value of `pct_encounter_type` for ED admits at Sutter Davis Hospital in 2015? **[1 pt]**
 
 **ANSWER HERE:** 
+**6.1%**
 
 ```{r, echo=T}
-
+ed_tib5 = ed_tib4 %>% 
+  mutate(
+    pct_encounter_type = round( ( (count/total_encounter) * 100 ), 1 )
+  )
+  
+ed_tib5 %>% select( type, oshpd_id, year, pct_encounter_type ) %>% head(4)
  
+# What is the value of `pct_encounter_type` for ED admits at Sutter Davis Hospital in 2015? 
+ed_tib5[which( str_to_lower(ed_tib5$facility_name) == "sutter davis hospital" 
+                          & ed_tib5$year == 2015
+                          & ed_tib5$type == "ED_Admit")
+        , ] %>% 
+  pull(pct_encounter_type)
 ```
 
 \newpage
@@ -340,10 +383,17 @@ What is the value of `pct_encounter_type` for ED admits at Sutter Davis Hospital
 Using the data frame created in question 14, first create a subset data frame that only includes rows for ED admits. Then use the arrange function to order the data frame to display rows first by lowest to highest year and then by highest to lowest value of `pct_encounter_type`.  Show a single line of code that can be used for this arrange step. **[1 pt]**
 
 **ANSWER HERE:** 
+**arrange( year, desc(pct_encounter_type)  )**
 
 ```{r q15a_work, echo=T}
 
+ed_tib6 = ed_tib5 %>% 
+  filter(  str_to_lower(type) == "ed_admit"  ) %>%
+  arrange( year, desc(pct_encounter_type)  )
 
+length(ed_tib6[[1]])  ## cross check, got 1670 rows, half of before, as expected.
+
+ed_tib6 %>% head
 
 ```
 
@@ -354,9 +404,11 @@ Using the data frame created in question 14, first create a subset data frame th
 What code would you use to obtain only the facility names for the first 5 rows of the dataset created in question 15A (facilities with highest values in the `pct_encounter_type` column for the first year in the data frame)?  **[1 pt]**
 
 **ANSWER HERE:** 
-
+**ed_tib6 %>% head(5) %>% pull( facility_name )**
 
 ```{r q15b_work, echo=T}
+
+ed_tib6 %>% head(5) %>% pull( facility_name )
 
 
 ```
@@ -371,9 +423,18 @@ Using the data frame created in question 15A, find the average (mean) value of p
 What is the average (mean) percentage of encounters that are ED admits for all facilities from 2015-2020? **[1 pt]**
 
 **ANSWER HERE:** 
+**13.8%**
 
 ```{r q16a_work, echo=T}
 
+mean_pct_encounter_type = mean( ed_tib6$pct_encounter_type )
+mean_pct_encounter_type
+
+ed_tib_q16a = ed_tib6 %>% 
+  mutate( above_below_avg = case_when(
+    pct_encounter_type >= mean_pct_encounter_type ~ "above",
+    TRUE                                          ~ "below"
+  ))
 
 ```
 
@@ -384,9 +445,17 @@ What is the average (mean) percentage of encounters that are ED admits for all f
 Using the data frame created in question 16A, What is the value of `above_below_avg` for ED admits at West Anaheim Medical Center for 2016? **[1 pt]**
 
 **ANSWER HERE:** 
+**above**
 
 ```{r q16b_work, echo=T}
+( ed_tib_q16b = ed_tib_q16a[ which( 
+  str_to_lower( ed_tib_q16a$facility_name) == "west anaheim medical center" 
+             &  ed_tib_q16a$year == 2016
+             &  ed_tib_q16a$type == "ED_Admit"
+  ), ] )
 
+# What is the value of `above_below_avg` for ED admits at West Anaheim Medical Center for 2016? 
+ed_tib_q16b$above_below_avg 
 
 ```
 
@@ -399,10 +468,19 @@ Restrict the dataset created in 16A to only include records for San Diego, Orang
 How many records remain? **[1 pt]**
 
 **ANSWER HERE:** 
+**104**
 
 
 ```{r q17a_work, echo=T}
 
+ed_tib_q17a = ed_tib_q16a %>%
+  filter( 
+    str_to_lower( county_name ) %in% c( "san diego", "orange", "los angeles"  ) 
+    &  year == 2020
+    )
+
+length(ed_tib_q17a[[1]])
+ed_tib_q17a %>% head
 
 ```
 
@@ -413,28 +491,51 @@ How many records remain? **[1 pt]**
 Using the data frame created in question 17A, what hospital in those counties has the highest percent of encounters that are admits in 2020? **[1 pt]**
 
 **ANSWER HERE:** 
-
+**College Medical Center**
 
 ```{r q17b_work, echo=T}
+ed_tib_q17b = ed_tib_q17a %>%
+  arrange( desc(pct_encounter_type) ) %>% 
+  head(1)
 
-
+ed_tib_q17b
 ```
 
 \newpage
 
 ## Question 18
 
-Question 18 & 19 utilize the dataframe you imported in questions 11 & 12. To start, create a new subset dataframe that only includes records for encounters that were ED visits (not admits) in the year 2020. Additionally, only include the following columns: Facility Name, County, ER Service Level visits, Type, and Count. 
+Question 18 & 19 utilize the dataframe you imported in questions 11 & 12. 
+To start, create a new subset dataframe that only includes records for encounters that were ED visits (not admits) in the year 2020. 
+Additionally, only include the following columns: Facility Name, County, ER Service Level visits, Type, and Count. 
 
 Create a new column called `county_visit_total` that contains the total number of ED visits for each county. _(Hint: after this step, this data frame should contain 1 row per county.)_ 
 
 Re-order the table to display the county with the highest number of ED visits at the top of the table. What county has the 10th highest total number of ED visits in 2020? **[1 pt]**
 
 **ANSWER HERE:** 
+**Kern**
 
 ```{r q18_work, echo=T}
 
+ed_tib_q12 = ed_tib2
 
+ed_tib_q18 = ed_tib_q12 %>%
+  filter( year == 2020 &
+          str_to_lower( type ) == "ed_visit" ) %>%
+  select( "facility_name", "county_name", "er_service_level_desc", "type", "count" )
+
+ed_tib_q18_partB = ed_tib_q18 %>%
+  group_by( county_name ) %>%
+  summarize( county_visit_total = sum( count ) ) %>%
+  arrange( desc( county_visit_total ))
+
+ed_tib_q18_partB %>% 
+  head(10)       %>%   # top 10
+  tail( 1)             # the last one of the top 10
+
+# cross check
+unique( ed_tib_q12$county_name ) %>% length() ## originally had 55 counties only
 
 ```
 
@@ -452,11 +553,31 @@ Building on to the data frame created in question 18, create a new column called
 Create a final table that summarizes the number of counties in each category _(Hint: this table should only have 4 rows)_.
 
 How many counties are in the “low” coverage category?  **[1 pt]**
+**14**
 
 **ANSWER HERE:** 
 
 
 ```{r q19_work, echo=T}
+
+ed_tib_q19 = ed_tib_q18_partB %>% 
+  mutate( visit_category = case_when(
+    county_visit_total >  178649                                ~ "High",
+    county_visit_total <= 178649 & county_visit_total >  66521  ~ "Medium",
+    county_visit_total <=  66521 & county_visit_total >  22026  ~ "Low",
+    TRUE                                                        ~ "Very Low"     
+  ))
+
+# Create a final table that summarizes the number of counties in each category.
+ed_tib_q19_sum = ed_tib_q19  %>% 
+  group_by( visit_category ) %>%
+  summarize( num = n() )
+ed_tib_q19_sum
+
+
+# How many counties are in the “low” coverage category? 
+num_low_cat = ed_tib_q19[which( ed_tib_q19$visit_category == "Low"), ] %>% tally()
+num_low_cat
 
 
 ```
@@ -467,14 +588,26 @@ How many counties are in the “low” coverage category?  **[1 pt]**
 
 Question 20 utilizes the dataset as it was first imported in question 11 & 12. 
 
-Create a subset dataset with only records for 2016 and basic ER service level. Keep only the following columns: Facility Name, County Name, Type, and Count. Pivot the dataset to create columns for each of the ED encounter types; these columns should each contain the counts of encounters for each type (admit and visit). 
+Create a subset dataset with only records for 2016 and basic ER service level. 
+Keep only the following columns: Facility Name, County Name, Type, and Count. 
+Pivot the dataset to create columns for each of the ED encounter types; these columns should each contain the counts of encounters for each type (admit and visit). 
 
 How many records are in the dataset after the pivot? **[1 pt]**
 
 **ANSWER HERE:** 
+**278**
 
 ```{r, echo=T}
+ed_tib_q20 = ed_tib_q12 %>%
+  filter( year == 2016 & 
+          str_to_lower( er_service_level_desc ) == "basic"  ) %>%
+  select( "facility_name", "county_name", "type", "count" )   %>%
+  pivot_wider( names_from="type", values_from="count")
 
+ed_tib_q20 %>% head()
+
+# How many records are in the dataset after the pivot? 
+length( ed_tib_q20[[1]] )
 
 ```
 
@@ -485,6 +618,7 @@ How many records are in the dataset after the pivot? **[1 pt]**
 Include the line of code used to perform the pivot. Make sure to include the function name as well as the arguments used. *[1 pt]*
 
 **ANSWER HERE:** 
+**pivot_wider( names_from="type", values_from="count")**
 
 
 
@@ -501,11 +635,46 @@ Please include sufficient code for the teaching team to be able to run your code
 Hint: Including more than one `group_by()` in a single call may also require the use of `ungroup()`. 
 
 Paste the single dplyr call below. **[1 pt]**
+mega_result = read_csv( 'data/ed_facility_ca.csv', show_col_types=FALSE ) %>% 
+  rename_with( ~ tolower( gsub(" ","_", .x, fixed=TRUE) )) %>%
+  filter( year == 2020 &
+          str_to_lower( type ) == "ed_visit" ) %>%
+  select( "facility_name", "county_name", "er_service_level_desc", "type", "count" ) %>%
+  group_by( county_name ) %>%
+  summarize( county_visit_total = sum( count ) ) %>%
+  arrange( desc( county_visit_total )) %>%
+  mutate( visit_category = case_when(
+    county_visit_total >  178649                                ~ "High",
+    county_visit_total <= 178649 & county_visit_total >  66521  ~ "Medium",
+    county_visit_total <=  66521 & county_visit_total >  22026  ~ "Low",
+    TRUE                                                        ~ "Very Low"
+  )) %>%
+  group_by( visit_category ) %>%
+  summarize( num = n() )
+
+
 
 ```{r bonus_a, echo=T}
+library(dplyr)
 
+mega_result = read_csv( 'data/ed_facility_ca.csv', show_col_types=FALSE ) %>% 
+  rename_with( ~ tolower( gsub(" ","_", .x, fixed=TRUE) )) %>%
+  filter( year == 2020 &
+          str_to_lower( type ) == "ed_visit" ) %>%
+  select( "facility_name", "county_name", "er_service_level_desc", "type", "count" ) %>%
+  group_by( county_name ) %>%
+  summarize( county_visit_total = sum( count ) ) %>%
+  arrange( desc( county_visit_total )) %>%
+  mutate( visit_category = case_when(
+    county_visit_total >  178649                                ~ "High",
+    county_visit_total <= 178649 & county_visit_total >  66521  ~ "Medium",
+    county_visit_total <=  66521 & county_visit_total >  22026  ~ "Low",
+    TRUE                                                        ~ "Very Low"
+  )) %>%
+  group_by( visit_category ) %>%
+  summarize( num = n() )
 
-
+mega_result
 ```
 
 
@@ -515,7 +684,14 @@ Include code that uses the `kable` package to print the final table for question
 
 ```{r bonus_b, echo=T}
 
-
+library( kableExtra )
+kable( mega_result,
+       booktabs = T, 
+       col.names = c( "Visit Category", "Number of Counties" ),
+       align = "rl",
+       caption = "Calif Emergency Dept visit by category, 2020",
+       digits = 0 
+       )
 ```
 
 

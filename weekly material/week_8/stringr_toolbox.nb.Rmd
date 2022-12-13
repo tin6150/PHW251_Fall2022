@@ -27,21 +27,46 @@ fruit <- c("apple", "banana", "pinapple", "orange", "mango")
 str_detect(fruit, "e")
 
 # returning only those with a letter e would then be
-
 fruit[str_detect(fruit, "e")]
 
 # this exact functionality can also done with str_subset
-
 str_subset(fruit, "e")
 
-# returning only those with e or o
-
+# returning only those with e or o  (regexp syntax)
 fruit[str_detect(fruit, "e|o")]
 
 # Recoding a data frame column based on whether a fruit has the letter e 
-
 fruit_df <- data.frame(fruit_name = fruit)
 fruit_df$favorites <- ifelse(str_detect(fruit_df$fruit_name, "e") == T, "Favorite", "Not Favorite")
+
+fruit_df
+
+
+
+
+## Sn50 R.html
+
+aString="this is a string"
+
+str_to_upper(aString) # same as toupper(aString)
+str_to_lower(aString)
+str_to_title(aString) # result in "This Is A String"
+
+word_bag = c("apple", "mango", "pineapple")
+str_detect( word_bag, "ap")  # get T F T (ie a vector of boolean)
+
+str(word_bag)
+
+str_detect( word_bag, "a|e")  # search by regular expression syntax: a or e
+
+result = word_bag[ str_detect(word_bag, "ap") ]
+str(result)
+
+
+fruit_df <- data.frame( fruit_name = word_bag )
+fruit_df$fav <- ifelse(str_detect(fruit_df$fruit_name, "e") == T, "Yes", "Not")
+
+fruit_df
 
 ```
 
@@ -97,6 +122,16 @@ str_sub(info, 9, 9)
 info <- c("23949390Yes", "12939029No", "19866029Sometimes", "99854229Disagree", "14515697Carrots")
 str_sub(info, 9)
 
+
+## Sn50
+aString="this is a string"
+start_position = 1  # R index start from 1
+end_position   = 4
+substr(aString, start_position, end_position)  # result is "this"
+
+str_sub(aString, start_position, end_position) # same as above, in tidyverse's stringr str_ fn family
+str_sub(aString,   14                        ) # no end position, match till end.  this result in ing
+
 ```
 
 ### A more complicated example (this is just for future reference)
@@ -133,9 +168,14 @@ This is where I use stringr most often, when I have non-standardized information
 # replaces spaces with underscores and converts everything to lower case
 str_to_lower(str_replace_all("Lab test Result COLUMN", " ", "_"))
 
+
+str_replace_all("Lab test Result COLUMN", " ", "_")
+
 # Similar to the first example, you can replace multiple characters with underscore using the pipe "|" character
 str_to_lower(str_replace_all("Lab test Result COLUMN#5", "[ |#]", "_"))
 
+
+str_replace_all("Lab test Result COLUMN#5", "[ |#]", "_") ##
 ```
 
 You can use either str_replace (with an empty string "" as the replacement) or str_remove. I have found this particularly useful in clearing out unneeded spaces in long text columns, removing columns for long text columns especially if I'm going to create a csv file from it, or getting rid of tab, carriage return and other hidden characters that computer systems sometimes insert into text strings.
@@ -145,6 +185,9 @@ You can use either str_replace (with an empty string "" as the replacement) or s
 dirty_data <- "%&%Result%&%2234342%&%"
 str_replace_all(dirty_data, "[%|&]", "")
 
+str_detect(dirty_data, regex("Esu", ignore_case=T) )
+
+
 # is the same as
 
 str_remove_all(dirty_data, "[%|&]")
@@ -152,6 +195,11 @@ str_remove_all(dirty_data, "[%|&]")
 # If we only want the number, we can also include the word result
 
 str_remove_all(dirty_data, "[%|&|Result]")
+
+
+
+word_bag = c("apple", "mango", "pineapple")             # word_bag is a list
+str_detect(word_bag, regex("APP", ignore_case=T) )
 
 ```
 
@@ -175,5 +223,22 @@ str_remove_all(dirty_data2, "[^[:alpha:]]")
 # And finally, if you run into some really wild characters, which can happen when data are stored in different operating systems, you can get rid of those characters by specifying removal of all characters except for ASCII recognized characters
 
 str_remove_all("ï¿½ Hidden string here =ï¿½ï¿½> Oï¿½OMï¿½Pï¿½ïH¿½<[]>", "[^[:ASCII:]]")
+
+
+
+x <- "In ALGOL, you could do logical AND with /\\."
+print(x)      # shows it as above ("input-like")
+writeLines(x) # shows it as you like it ;-)
+
+
+`x y` <- 1:5
+`x y`
+d <- data.frame(`1st column` = rchisq(5, 2), check.names = FALSE)
+
+
+d <- data.frame(`1st column`=3, check.names=FALSE)
+d$`1st column`
+
+
 
 ```

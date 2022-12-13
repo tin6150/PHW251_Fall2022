@@ -46,13 +46,17 @@ testing <- readxl::read_excel(
 #confirm total_tests is now numeric
 str(testing)
 
+
+## gt = greater than
 #create new logical variables to help with looking at our data
 #total_gt_pos will return TRUE where total_tests>pos_tests
 #total_gt_pop will return TRUE where group_pop>total_tests
 testing_temp <- testing %>%
-  mutate(total_gt_pos = total_tests>pos_tests,
+  mutate(total_gt_pos = total_tests>pos_tests,    ##### Pff.... she looked at col with FALSE as result!  more logical to be less_than, sritct, no <= .   # video ~8:03   (or i guess she is looking for TRUE to say data pass validation test, those that are FALSE fail validation)
          total_gt_pop = group_pop>total_tests)
 
+
+## testing_temp 
 #one instance where pos_tests > total_tests (data entry error?)
 #one instance where total_tests > group_pop (outlier?)
 
@@ -68,6 +72,9 @@ testing_temp <- testing %>%
 * sum(is.na()) - number missing
 ```{r}
 # test_date
+table(testing$test_date)   ## Sn50
+
+
 table(testing$test_date, useNA="always")
 summary(as_date(testing$test_date))
 sum(is.na(testing$test_date))
@@ -77,11 +84,16 @@ sum(is.na(testing$test_date))
 # group
 unique(testing$group)
 table(testing$group, useNA = "ifany")
+table(testing$group, useNA = "always")   ##
+table(testing$group )
 
 #need to standardize the group name; remove group 3 and NA's before analyzing
 
 # total_tests
 summary(testing$total_tests)
+sum(testing$total_tests)        ## Sn50
+sum(testing$total_tests, na.rm=T)        ## Sn50
+
 sum(is.na(testing$total_tests))
 
 #need to look into the outlier - 45,000 tests; handle missing values
@@ -94,6 +106,11 @@ sum(is.na(testing$pos_tests))
 
 # group_pop
 table(testing$group, testing$group_pop, useNA="always")
+
+table(testing$group, useNA="always")
+table(testing$group_pop, useNA="always")
+
+
 
 #okay for group 1 and 2
 
@@ -110,16 +127,27 @@ ggplot() - flexible plotting for one or two variables
 ggplot(data = testing, mapping = aes(x = group)) +
   geom_bar()
 
+table(testing$pos_tests)  ### Sn50
+table(testing$group, useNA="always")  ### Sn50, text equiv of ggplot above
+
+
 #continuous - positive tests
 ggplot(data = testing,mapping = aes(x = pos_tests)) +
   geom_histogram(binwidth=5)
+
+table(testing$pos_tests, useNA="always")  ### Sn50, text equiv of ggplot above, but need to use some group_by a/o case_when to have mul values binned to same column
+
 
 #continuous - total tests
 ggplot(data = testing,mapping = aes(x = total_tests)) +
   geom_histogram(binwidth = 50) +
   xlim(0,500)
+
+
+# need to use the xlim to remove the outlier from the plot
   
 ```
+
 
 ```{r}
 
@@ -129,9 +157,19 @@ ggplot(data = testing, mapping = aes(x = total_tests, y = pos_tests)) +
   geom_count() +
   xlim(0,500)
 
-ggplot(data = testing, mapping = aes(x = total_tests, y = group)) + 
-  geom_count()+
+
+## Sn50
+table( testing$total_tests, testing$pos_tests )
+
+## Sn50
+ggplot(data = testing, mapping = aes(x = total_tests, y = pos_tests)) + 
+  geom_point() +
   xlim(0,500)
+
+ggplot(data = testing, mapping = aes(x = total_tests, y = group)) + 
+  geom_point() +
+  xlim(0,500)
+
 
 #one categorical, one continuous 
 #total_tests by group

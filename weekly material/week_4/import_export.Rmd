@@ -73,9 +73,7 @@ Arguments
 file_path_csv <- "https://data.chhs.ca.gov/dataset/8eb8839f-52a1-410b-8c4a-5b1c1678bbc2/resource/21fec3a1-ae82-49f4-ae97-fd8c78ca22ee/download/retail-availability-of-electronic-smoking-devices-by-county.csv"
 
 #read in file with no options changed
-esd <- read_csv(
-  file_path_csv
-)
+esd <- read_csv(   file_path_csv )
 
 #specify column names
 esd_colnames <- read_csv(
@@ -103,7 +101,7 @@ esd_coltypes <- read_csv(
   col_names = c("county","yr","pct","ci_l","ci_u"),
   # col_types = cols(col_character(), col_double(), col_number(), col_number(), col_number()),
   # col_types = cols_only(county = col_character(), yr = col_double(), pct = col_number()), 
-  col_types = "cdnnn",
+  col_types = "cdnnn",   # oh, this is the abreviated char, double, num, num, num !
   skip = 1
 )
 
@@ -112,11 +110,13 @@ str(esd_coltypes)
 #fix the warnings due to unexpected values by adding * and n/a to the list of values set 
 #to missing
 esd_coltypes <- read_csv(
+  
   file_path_csv,
   col_names = c("county","yr","pct","ci_l","ci_u"),
+  skip = 1,
   col_types = "cdnnn",
   na = c("", "NA","*","n/a"),
-  skip = 1
+  
 )
 
 str(esd_coltypes)

@@ -22,6 +22,10 @@ library(lubridate)
 dob <- as.Date("2020-09-03")
 dob
 
+
+sn50bday = as.Date("1970-01-01")
+sn50bday %>% as.integer()
+
 # Derive the number of days since 1/1/1970 by converting the date object to numeric
 as.numeric(dob)
 #Confirming a different way
@@ -36,6 +40,10 @@ as.Date("2020-09-04") + 90
 
 chr_dates <- c("03/05/1985", "09/21/1972")
 dates <- as.Date(chr_dates, "%m/%d/%Y")
+dates
+
+sn51dob = as.Date( "12/25/1969", "%m/%d/%Y" )
+as.integer(sn51dob)
 
 # Another frequently used function is getting the current date
 Sys.Date()
@@ -48,12 +56,13 @@ Sys.Date
 # Lubridate makes things a little easier in working with dates
 
 dob <- as_date("2020-09-03")
+dob
 
 # Using the mdy function easily converts the US date convention (or many other date conventions) to R date
 mdy("02/29/2020")
 
 # if you wanted to add 90 days to a date (or a column of dates) it's basically the same:
-as_date("2020-09-04") + 90
+as.Date("2020-09-04") + 90
 
 # But if you need to add three months, lubridate makes it much easier
 as_date("2020-09-04") + months(1)
@@ -64,9 +73,17 @@ as_date("2020-03-31") + months(1)
 # the %m+% operator adds a month but reverts back to the last day of the month if the expression yields a non-existent date
 as_date("2020-03-31") %m+% months(1)
 
+
+sn50dob = as.Date( "1/1/1970", "%m/%d/%Y" )
+sn50dob + months(1) + 30 + years(1)
+
+typeof(sn50dob)
+
 # On the off chance you need to convert from numeric:
 
 lubridate::as_date(18239)
+
+
 
 # You can also get current time (just have to be careful about time zone) using
 
@@ -92,6 +109,10 @@ test <- as_date("1999-04-02")
 day(test)
 month(test)
 year(test)
+
+typeof(month(test))
+typeof(year(test))
+
 
 # day of the week
 wday(test, label = TRUE, abbr = TRUE)

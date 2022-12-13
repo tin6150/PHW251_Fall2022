@@ -1,7 +1,7 @@
 ---
 title: "Problem Set 3"
-author: "YOUR NAME HERE"
-date: "DATE"
+author: "Tin Ho"
+date: "2022-09-18"
 output: pdf_document
 ---
 
@@ -49,6 +49,13 @@ Now you try! Create a data frame with three columns and the following values:
 
 ```{r office_df}
 # your code here
+my_df<- data.frame("ID"   = c(1, 2, 3), 
+                   "NAME" = c("Pam", "Jim", "Dwight"),
+                   "AGE" = c(40, NA, 48))
+
+my_df
+
+
 ```
 
 \newpage
@@ -62,6 +69,9 @@ With your new data frame created in the previous question, find the following va
   
 ```{r office_values}
 # your code here
+length( my_df )
+typeof( my_df )
+class( my_df )
 ```
 
 \newpage
@@ -84,6 +94,16 @@ knitr::include_graphics('./table_replicate.png')
 Hint: You may need to load a library for tibbles.
 ```{r tibble}
 # your code here
+library(tidyverse)
+
+my_tib = tibble(
+  data_id     = 101:105,
+  gender      = c("female", "male", "non-binary", "male", NA),
+  temperature = c( 98, 97.3, 101.1, 97.5, 99.6 )
+)
+
+my_tib
+
 ```
 
 \newpage
@@ -92,12 +112,27 @@ Hint: You may need to load a library for tibbles.
 
 What are the key differences between data frames and tibbles? 
 
-YOUR ANSWER HERE
-
+Tibbles sounds more sophisticated, and to some extent, it is:
+- It has no row names
+- column can have space (dubious to me)
+- create complex column by performing operations from other columns.
+- strings are not converted to category automatically, which might be both good and bad.
 
 Why are tibbles preferable?
 
-YOUR ANSWER HERE
+people like flexibility?  what's the deal with column with spaces?  
+as programming goes, space is a tokenizer, having space in column name 
+just add so many more complexities.
+but i guess it looks nicer in print outs and publications.
+
+tibbles are said to by default only show like 5 rows of data when used in R studio, 
+which is nice as it does not clobber up the whole screen when looking at data.
+But i thought this was a feature of R studio, didn't know it could only do this with tibbles,
+perhaps R studio should be smarter still and figure out a way to run 
+head(5) on all large data set automagically.  
+
+I am not against tibble, but perhaps its virtue I still have to learn 
+when i use it more.
 
 
 \newpage
@@ -114,6 +149,12 @@ We just found out results for COVID testing and want to add it to our data. Usin
 
 ```{r covid_results}
 # your code here
+results = c( "NEGATIVE", "POSITIVE", "NEGATIVE", "NEGATIVE", "NEGATIVE")
+my_tib = cbind( my_tib, results )
+
+
+my_tib
+
 ```
 
 \newpage
@@ -124,6 +165,10 @@ You find out there was an error in data collection and subject 102's temperature
 
 ```{r fix_covid_results}
 # your code here
+my_tib[[3]][[2]] = 98.3   # column = 3, row = 2
+
+my_tib
+
 ```
 
 \newpage
@@ -140,6 +185,11 @@ https://data.ca.gov/dataset/stds-in-california-by-disease-county-year-and-sex
 library(readr)
 
 # your code here
+stds = readr::read_csv("data/stds-by-disease-county-year-sex.csv", skip=3)
+#stds_cleaned = na.omit(stds)
+stds_cleaned = stds
+
+head(stds_cleaned)
 ```
 
 You may have noticed that there are empty cells in the first three rows. Modify your code above (if you haven't already) to remove these rows.
@@ -150,18 +200,20 @@ You may have noticed that there are empty cells in the first three rows. Modify 
  
 Let's explore this STD data set. **Use code** to find the values requested below. Insert R chunks as needed.
 
-How many rows?
-YOUR ANSWER HERE
+```{r answer-by-code}
+# How many rows?
+dim(stds_cleaned)[1]
 
-How many columns? 
-YOUR ANSWER HERE
+# How many columns? 
+length(stds_cleaned)
 
-What are the column names?
-YOUR ANSWER HERE
+#What are the column names?
+names(stds_cleaned)
 
-What are the column types?
-YOUR ANSWER HERE
+#What are the column types?
+str(stds_cleaned)
 
+```
 \newpage
 
 ### Question 9
@@ -170,6 +222,11 @@ You want to dig deeper into the data and focus on the years 2015 - 2018. Use the
 
 ```{r which}
 # your code here
+
+stds_15_18 = stds[ which(stds[[3]] >= 2015 & stds[[3]] <= 2018 ), ] # the comma!!
+
+str(stds_15_18)
+
 ```
 \newpage
 
@@ -181,6 +238,11 @@ As a test, you can try to read in the .csv you created to make sure everything l
 
 ```{r export}
 # your code here
+readr::write_csv( stds_15_18, "data/stds_15_18.csv")
+
+str( readr::read_csv( "data/stds_15_18.csv") )
+
+
 ```
 \newpage
 
@@ -189,11 +251,16 @@ As a test, you can try to read in the .csv you created to make sure everything l
 Look up how to use the unique() function and run it on the County column of the STD data set. You should see a total of 59 counties.
 ```{r unique}
 # your code here
+( unique_counties = unique( stds[["County"]]) )
 ```
 
 You decide to focus on one county. Subset your data for one county of your choice.
 ```{r county_subset}
 # your code here
+stds_Ala = stds[ which(stds[["County"]] == "Alameda"), ] # the comma!!
+
+str(stds_Ala)
+
 ```
 
 \newpage
@@ -209,6 +276,10 @@ df$var3 <- df$var1 + df$var2
 
 ```{r rate}
 # your code here
+stds_Ala$Rate = ( stds_Ala$Cases / stds_Ala$Population ) * 100000
+
+View(stds_Ala)
+
 ```
 
 

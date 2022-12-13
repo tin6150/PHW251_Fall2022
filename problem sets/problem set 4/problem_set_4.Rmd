@@ -1,7 +1,7 @@
 ---
 title: "Problem Set 4"
-author: "NAME HERE"
-date: "DATE HERE"
+author: "Tin Ho"
+date: "2022-09-24"
 output: pdf_document
 ---
 
@@ -12,6 +12,12 @@ For this problem set you will tidy up a dataset of 500 individuals. We also want
 Load your data (500_Person_Gender_Height_Weight.csv):
 
 ```{r load, include=FALSE}
+library(dplyr)
+library(readr)
+HW_file = "500_Person_Gender_Height_weight.csv"
+HW_dat = read_csv( HW_file )
+
+str(HW_dat)
 
 ```
 
@@ -20,6 +26,15 @@ Load your data (500_Person_Gender_Height_Weight.csv):
 Clean the column headers to be all lower case, have no spaces, and rename "Location information" to location.
 
 ```{r clean}
+
+hw_renamed <- 
+  rename_with(HW_dat, 
+              ~ tolower(gsub(" ","_",.x,fixed=TRUE)) ) %>%
+  rename( location = location_information ) 
+
+
+hw_renamed %>% head()
+
 
 ```
 
@@ -41,6 +56,20 @@ Although there's many ways you can accomplish this task, we want you to use an i
 
 ```{r bmi_calc}
 
+uniq_loc = hw_renamed %>% distinct(location) %>% pull()
+USA = c("New York","Colorado","Hawaii")
+
+bmi_dat = hw_renamed %>%  mutate(
+    bmi = if_else(location %in% USA, 
+                  703*weight/((height* 12)^2), 
+                      weight/((height*.01)^2) )
+        ) 
+
+
+bmi_dat %>% head()
+
+summary(bmi_dat)
+
 ```
 
 \newpage
@@ -56,11 +85,21 @@ Create a new variable that categorizes BMI with case_when():
 
 ```{r bmi_cat}
 
+bmi_dat = bmi_dat %>% 
+  mutate(bmi_cat = case_when(              bmi < 18.5 ~ "Underweight",
+                             bmi >= 18.5 & bmi < 25.0 ~ "Normal",
+                             bmi >= 25.0 & bmi < 30.0 ~ "Overweight",
+                             bmi >= 30                ~ "Obese"         )  )
+
+bmi_dat %>% head()
+#bmi_dat %>% distinct(bmi_cat, .keep_all=T) 
+
+
 ```
 
 Could we have used if_else()?  
 
-YOUR ANSWER HERE
+_Maybe, but not easily, as there are more than two cases.  multiple if_else will be quite ugly_
 
 \newpage
 
@@ -70,6 +109,10 @@ Arrange your data first by location and then by descending order of BMI.
 
 ```{r arrange_ds}
 
+arranged_dat = bmi_dat %>% arrange(location, desc(bmi))
+
+head(arranged_dat)
+
 ```
 
 ### Question 5
@@ -77,6 +120,10 @@ Arrange your data first by location and then by descending order of BMI.
 Use a dplyr method to remove the height, weight, and BMI columns from your data.
 
 ```{r remove_cols}
+
+reduced = arranged_dat %>% select( -c(height,weight,bmi))
+
+head(reduced)
 
 ```
 
@@ -87,5 +134,23 @@ Use a dplyr method to remove the height, weight, and BMI columns from your data.
 Perform all the actions in this problem set with one dpylr call. 
 
 ```{r mega_call}
+
+
+mega = 
+  rename_with(HW_dat, ~ tolower(gsub(" ","_",.x,fixed=TRUE)) ) %>%
+  rename( location = location_information )  %>%
+  mutate(
+    bmi = if_else(location %in% c("New York","Colorado","Hawaii"), 
+                  703*weight/((height* 12)^2), 
+                      weight/((height*.01)^2) )                    )  %>% 
+  mutate(bmi_cat = case_when(              bmi < 18.5 ~ "Underweight",
+                             bmi >= 18.5 & bmi < 25.0 ~ "Normal",
+                             bmi >= 25.0 & bmi < 30.0 ~ "Overweight",
+                             bmi >= 30                ~ "Obese"         )  ) %>%
+  arrange(location, desc(bmi))   %>%
+  select( -c(height,weight,bmi))  
+
+
+mega %>% head()
 
 ```

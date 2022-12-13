@@ -46,6 +46,16 @@ testing_plain <- data.frame(
 #(factors will be covered in more detail in the next few weeks)
 str(testing_plain)
 
+## errr... it still say chr... Sn50
+testing_factor <- data.frame(
+  county = c("Alameda","Contra Costa","Marin"),
+  total_tests = c(500,745,832),
+  pos_tests = c(43, 32, 30),
+  stringsAsFactors = TRUE          ## now it shows up as factor, so FALSE is default?  ##Sn50
+)
+str(testing_factor)
+
+
 #set stringsAsFactors=FALSE to allow character values to read in as character, rather than 
 #factor
 testing <- data.frame(
@@ -66,8 +76,10 @@ testing_row_name <- data.frame(
   county = c("Alameda","Contra Costa","Marin"),
   total_tests = c(500,745,832),
   pos_tests = c(43, 32, 30),
-  row.names = "county"
+  row.names = "county"                     ## this no longer treated as a general column/variable 
 )
+
+str(testing_row_name)  ##Sn50
 
 #print to console - notice that there are no longer row numbers 1-3, they have been 
 #replaced by county (and there is no longer a column labeled 'county')
@@ -164,11 +176,14 @@ testing$pct_pos <- round(100*testing$pos_tests/testing$total_tests,1)
 
 ### Restructuring
 ```{r}
-#reorder columns
-testing <- testing[,c(4,1,2,3,5)]
+
+#reorder columns, note POSITION of comma!
+testing_reordered_col <- testing[,c(4,1,2,3,5)]           ## this is reorder by col index!
+testing_4_cols = testing[,1:4]                            ## get subset of columns in new df
+
 
 #reorder rows based on values in a specified column
-testing <- testing[order(testing$county),]
+testing_reordered_rows <- testing[order(testing$county),]  ## note position of comma!
 
 #create a new df without the county column
 #option 1: list columns by order or name
@@ -267,4 +282,14 @@ plot(flights$month,flights$dep_delay, type = "b")
 
 ```
 
+```{r sn50}
+# from slide 17 week 4
+my_tib = tibble(
+  v = c("dog","cat","mouse"),
+  x = 1:3,
+  y = 2,
+  z = x^2*y
+)
 
+my_tib
+```

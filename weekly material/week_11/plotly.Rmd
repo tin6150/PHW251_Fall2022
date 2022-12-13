@@ -3,6 +3,9 @@ title: "Plotly"
 output: html_document
 ---
 
+// if try to create pdf_document, render will fail
+// output: pdf_document
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
@@ -142,5 +145,40 @@ plot2 <- plot_ly(std_gg3b,
 subplot(plot1,plot2,nrows=2,shareX=T)
 
 subplot(plot1,plot2,shareY=T)
+
+```
+
+
+
+eg from web
+cuz i want bar graph with hoover info that is not as extensive as what's written on the bar
+
+https://plotly.com/r/bar-charts/
+
+huge page enchilada
+https://plotly.com/r/reference/#layout-hovermode
+
+```{r eg_from_web}
+
+library(plotly)
+
+x <- c('Product A', 'Product B', 'Product C')
+y <- c(20, 14, 23)
+text <- c('27% market share', '24% market share', '19% market share')
+
+data <- data.frame(x, y, text)
+
+fig <- plot_ly(data, x = ~x, y = ~y, type = 'bar',
+             text = y, 
+             textposition = 'auto',
+             marker = list(color = 'rgb(158,202,225)',
+                           line = list(color = 'rgb(8,48,107)', width = 1.5)))
+
+fig <- fig %>% layout(title = "January 2013 Sales Report",
+         xaxis = list(title = ""),
+         yaxis = list(title = ""))
+
+fig
+
 
 ```

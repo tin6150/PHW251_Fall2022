@@ -1,7 +1,7 @@
 ---
 title: "PHW251 Problem Set 6"
-author: "NAME HERE"
-date: "DATE HERE"
+author: "Tin Ho"
+date: "2022-10-15"
 output: pdf_document
 ---
 
@@ -12,8 +12,11 @@ For this part we will work with fictional data comparing the efficacy of two int
 ```{r, include=F, echo=F}
 library(tidyverse)
 library(lubridate)
+library(stringr)
 
 df <- read_csv("data/missing_interventions.csv")
+
+str(df)
 ```
 
 ### Question 1
@@ -22,15 +25,69 @@ There's missing data in this data set. Can you identify them? In the next questi
 
 ```{r}
 # your code here
+
+
+## Looking for places that R coded as NA
+
+## sum( is.na( df[[1]] ))
+
+for( i in colnames(df) ) {
+  x = sum( is.na( df[i] ) )
+  msg = sprintf( "column %s has %d NAs", i, x )
+  print( msg )
+}
+
+## the for loop optimization in R is skipping execution for things that only produce "side effects"
+## sum( is.na( df[i] ))   by itself produce no output inside a for loop
+## ditto, sprintf() produce no output
+## thankfully print() does!
+
+
+total_na = sum( sapply( df, is.na ) )
+total_na
+
+
+## looking for cell values, and visually check what may be out of place
+## and should be converted to NA
+
+for( i in colnames(df) ) {
+  check = distinct( df[i] ) 
+  #x = sum( is.na( df[i] ) )
+  msg = sprintf( "column %s has values of %s ", i, check )
+  print( msg )
+}
+
 ```
 
 How many NAs did you find? 
 
-YOUR ANSWER HERE
+Col states, interventions, gender, orientation and outcome all have some NA in them, 
+specifically, 6, 11, 4, 4, and 7, respectively.
+
+There is a total of 32 NA altogether in this dataset.
+
 
 Are there other values you think may count as NA?
 
-YOUR ANSWER HERE
+My simple for-loop didn't find any other NA.  However, there could be 
+other things that can also cause problem, eg
+NaN, NULL, which in some instances could be considered as NA.
+Inf and -Inf could also pose a problem.
+Verbatim strings such as "NA", "-" or other text could also have been intended as NA
+but were not treated as NA by R due to our import process.
+
+Visually scanning, gender also have things like -999, -1 which are 
+essentially missing values.
+
+well, the next question need to address this explicity, so wrote more code...
+and found:
+
+- state has things like "C A" and CA_, stripping space and symbols , or only taking :alpha:, should clean them up.
+
+- gender has -999, -1, which should be converted to NA
+
+- orientation - also has -999, -1, and other.  not sure if they should be converted to other or na.
+
 
 \newpage
 
@@ -39,6 +96,26 @@ YOUR ANSWER HERE
 For the other values you believe may also be NAs, re-code them as NA. 
 ```{r}
 # your code here
+
+## not creating new column, no need for mutate()
+## replacing them "in-place" has a cleaner syntax :D
+df$gender = na_if( df$gender, -999 )
+df$gender = na_if( df$gender, -1 )
+
+
+df_step2 = df %>%
+  mutate( state = str_remove_all( state, "[^[:alpha:]]" ) ) %>% # rm space and _
+  mutate( state = str_to_upper( state ) )  %>%   # convert state to upper case 
+  mutate( orientation = na_if( orientation, -999 ))  %>%
+  mutate( orientation = na_if( orientation, -1   ))
+
+#View(df)
+#View(df_step2)
+df_step2 %>% head
+
+## how many NA now?
+total_na_post_clean = sum( sapply( df_step2, is.na ) )
+total_na_post_clean
 ```
 
 \newpage
@@ -50,10 +127,33 @@ Now that we've fixed our NA values, let's address the errors we see with city an
 Use `distinct()` and `pull()` to see all the variations you need to account for. Then, use `case_when()` to fix the values. We have provided the code to fix the variation for Georgia and Texas using `case_when()`. Expand this code to fix the state abbreviations for California and all the city names.
 
 ```{r}
-df <- df %>% mutate(state = case_when(state %in% c("GA", "gA", "ga", "G A") ~ "GA",
-                                      state %in% c("TX", "tX", "tx") ~ "TX"))
 
-# your code here
+# my updated code here
+df = df_step2 ## Sn50 they wanted to use the same table name
+
+State_List = distinct( df["state"] ) %>% pull 
+State_List
+
+# In previous step I removed space and symbols, and capped everything
+# so just really need to convert to factors
+
+
+df <- df %>% mutate(state = case_when(state %in% c("GA", "gA", "ga", "G A") ~ "GA",
+                                      state %in% c("TX", "tX", "tx")        ~ "TX", 
+                                      state %in% c("CA"            )        ~ "CA"
+                                      ))
+
+# define a "not in" operator
+# https://stackoverflow.com/questions/38351820/negation-of-in-in-r
+`%nin%` = Negate(`%in%`)
+
+df %>% filter( state %nin% c("GA", "TX", "CA"))
+# there are 6 rows where state was not in the input and so are NA.
+# wait till Q5
+
+## fix city names
+df$city = str_to_title( df$city )
+
 ```
 
 \newpage
@@ -64,6 +164,7 @@ Format the date column into a date format using a lubridate function. Ominously,
 
 ```{r}
 # your code here
+df$date = as.Date(df$date, "%d/%m/%Y")
 ```
 
 \newpage
@@ -82,6 +183,22 @@ One suggestion is to create a variable indicating whether to drop the row. If yo
 
 ```{r}
 # your code here
+df_step5 = df %>%
+  drop_na( state ) %>%                          #some rows have no state info, drop
+  mutate( consistent = case_when(
+    city == "Atlanta"     & state != "GA"  ~ NA,
+    city == "Austin"      & state != "TX"  ~ NA,
+    city == "San Antonio" & state != "TX"  ~ NA,
+    city == "Hayward"     & state != "CA"  ~ NA,
+    city == "Oakland"     & state != "CA"  ~ NA,
+    TRUE                                   ~ T
+  )) %>%
+  drop_na( consistent )
+
+
+dim( df_step5 )
+## dim returns 33 rows, so have coded the city pairing clean up correctly.
+
 ```
 
 \newpage
@@ -97,11 +214,33 @@ For all of the cities except Atlanta it's clear what intervention took place. In
 
 ```{r}
 # your code here
+
+df_step6 = df_step5 %>%
+  mutate( intervention = case_when(
+    city == "Hayward"      & is.na(intervention) ~ 1,
+    city == "San Antonio"  & is.na(intervention) ~ 1,
+    city == "Oakland"      & is.na(intervention) ~ 2,
+    city == "Austin"       & is.na(intervention) ~ 2,
+    TRUE       ~ intervention  # keep orig intervention 
+  )) %>%
+  drop_na( intervention )
+
+dim( df_step6 )
+## end up with 30 rows
+
+sum( is.na(df$intervention ) )
+## orig had 11 rows where intervention is.na
+
+#View( df_step6)
+
 ```
 
 How many observations did you drop?
 
-YOUR ANSWER HERE
+dropped 3 rows.
+started with 33, end up with 30 rows.
+(it seems that there were 11 rows where intervention was NA, 
+so fixed/rescued 8 rows)
 
 \newpage
 
@@ -111,6 +250,14 @@ We have a few NAs in the outcome column. Our on-site researchers informed us tha
 
 ```{r}
 # your code here
+
+df_step7 = df_step6 %>%
+  mutate( outcome = case_when(
+    is.na( outcome )  ~ 0,
+    TRUE ~ outcome         # keep original outcome count 
+  ) )
+
+#View(df_step7)
 ```
 
 
@@ -120,6 +267,21 @@ Use ggplot to create a box plot comparing the two interventions and their outcom
 
 ```{r}
 # your code here
+
+df_step8 = df_step7 %>%
+  mutate( intervention =
+    factor( intervention, 
+            levels=c(1,2),
+            labels=c("1","2") )
+  ) 
+colnames(df_step8 ) = str_to_title(colnames(df_step8))
+
+ggplot( data=df_step8, aes( x=Intervention, y=Outcome) ) +
+  geom_boxplot( col="black" ) + 
+  labs( title="Outcome by Intervention",
+        alt  ="box plot of outcome by intervention" )
+  
+
 ```
 
 \newpage
@@ -155,6 +317,11 @@ Read in the data! To make it slightly more challenging we have changed the forma
 
 ```{r}
 # your code here
+
+library(readxl)
+datafile = "data/one_level_deeper/non_deceptive_placebo.xlsx"
+placebo_df = read_xlsx( datafile )
+
 ```
 
 \newpage
@@ -165,6 +332,13 @@ It's a bit difficult to tell what group (control, placebo, or non-deceptive plac
 
 ```{r}
 # your code here
+
+placebo_df = placebo_df %>%
+  mutate( GROUP = case_when(
+    str_starts( ID, "C" )   ~ "Control",
+    str_starts( ID, "P" )   ~ "Placebo",
+    str_starts( ID, "N" )   ~ "Non-deceptive"
+  ))
 ```
 
 \newpage 
@@ -177,6 +351,15 @@ Unfortunately, the two research sites were not consistent in their naming conven
 
 ```{r}
 # your code here
+
+placebo_df = placebo_df %>%
+  mutate( TEST = case_when(
+    str_detect( ID, regex("Pre",   ignore_case=T ) )  ~ "pre-test"  ,
+    str_detect( ID, regex("Post",  ignore_case=T ) )  ~ "post-test"
+  ))
+
+placebo_df %>% head()
+
 ```
 
 \newpage 
@@ -189,6 +372,11 @@ Hint: Check out ?parse_date_time
 
 ```{r}
 # your code here
+placebo_df = placebo_df %>%
+  mutate( DATE_FIX = parse_date_time( DATE, c("mdy","dmy") )  )
+
+sum( is.na( placebo_df$DATE_FIX ))
+# and none of the row is NA, should have parsed all entries
 ```
 
 \newpage 
@@ -199,6 +387,15 @@ You realize there was a strange error in your excel file that, for every date, p
 
 ```{r}
 # your code here
+placebo_df = placebo_df %>%
+  mutate( DATE_FIX2 = DATE_FIX + years(1)  )
+
+
+
+
+
+
+
 ```
 
 \newpage 
@@ -209,6 +406,18 @@ Let's clean up our data frame by removing DATE and DATE_FIX. Afterwards, rename 
 
 ```{r}
 # your code here
+
+# make a backup for recovery during coding error
+# I am starting to dislike non-idempotent code in R...
+placebo_df_tmp = placebo_df
+
+placebo_df = placebo_df_tmp    %>%
+  select( -c(DATE, DATE_FIX) ) %>%
+  rename( DATE = DATE_FIX2 )
+
+placebo_df %>% head()
+# col rename looks good
+
 ```
 
 \newpage 
@@ -219,28 +428,50 @@ We're interested in plotting our data to begin digging into the results. Below i
 
 ```{r}
 # install.packages("ggthemes")
-# library(ggthemes)
+library(ggthemes)
+ 
+df_plot <- placebo_df %>% 
+   group_by(GROUP, LOCATION) %>%
+   summarize(MEAN_PAIN = mean(PAIN_RATE))
 # 
-# df_plot <- placebo_df %>% 
-#   group_by(GROUP, LOCATION) %>%
-#   summarize(MEAN_PAIN = mean(PAIN_RATE))
-# 
-# ggplot(df_plot, aes(x = LOCATION, y = MEAN_PAIN, fill = GROUP)) +
-#   geom_col(position = "dodge") +
-#   ylim(0, 10) +
-#   theme_few() +
-#   scale_fill_few("Medium") +
-#   theme(axis.title = element_blank(),
-#         axis.title.y = element_text()) +
-#   labs(fill = "Group",
-#        title = "Non-deceptive placebo study",
-#        y = "Pain rating")
+ggplot(df_plot, aes(x = LOCATION, y = MEAN_PAIN, fill = GROUP)) +
+   geom_col(position = "dodge") +
+   ylim(0, 10) +
+   theme_few() +
+   scale_fill_few("Medium") +
+   theme(axis.title = element_blank(),
+         axis.title.y = element_text()) +
+   labs(fill = "Group",
+        title = "Non-deceptive placebo study",
+        y = "Pain rating")
 ```
 
 For a quick first pass we think this visualization isn't so bad. However, logically, we think that the order of the groups should be: Control, Placebo, Non-deceptive. Make GROUP into a factor that reflects this order. If done correctly, when you re-run the above chunk, the plot should show the bars in that order
 
 ```{r}
 # your code here
+
+df_plot <- placebo_df %>% 
+  group_by(GROUP, LOCATION) %>%
+  summarize(MEAN_PAIN = mean(PAIN_RATE)) %>%
+  rename( GROUP_ORIG = GROUP ) %>%
+  mutate( GROUP = factor(
+    GROUP_ORIG,
+    levels=c( "Control", "Placebo", "Non-deceptive" )
+  ))
+
+
+# rerun ggplot 
+ggplot(df_plot, aes(x = LOCATION, y = MEAN_PAIN, fill = GROUP)) +
+   geom_col(position = "dodge") +
+   ylim(0, 10) +
+   theme_few() +
+   scale_fill_few("Medium") +
+   theme(axis.title = element_blank(),
+         axis.title.y = element_text()) +
+   labs(fill = "Group",
+        title = "Non-deceptive placebo study",
+        y = "Pain rating")
 ```
 
 

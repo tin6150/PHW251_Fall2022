@@ -1,13 +1,12 @@
 ---
 title: "PHW251 Bonus Problem Set"
-author: "NAME HERE"
-date: "DATE HERE"
+author: "Tin Ho"
+date: "2022-12-05"
 output:
-  pdf_document: default
   html_document:
     df_print: paged
+  pdf_document: default
 always_allow_html: true
-
 ---
 
 ```{r setup, include=FALSE}
@@ -16,7 +15,13 @@ library(tidyverse)
 library(lubridate)
 library(formattable)
 library(DT)
+library(readr)
+library(readxl)
 ```
+
+
+The knitted HTML is accessible at: 
+[https://tin6150.github.io/psg/R_phw251_bonus_problem_set.html](https://tin6150.github.io/psg/R_phw251_bonus_problem_set.html)
 
 ## Part 1
 
@@ -26,18 +31,20 @@ Below is a function that ought to return "I'm an even number!" if `x` is an even
 
 NOTE: `%%` is the "modulo" operator, which returns the remainder when you divide the left number by the right number. For example, try `2 %% 2` (should equal 0 as 2/2 = 1 with no remainder) and `5 %% 2` (should equal 1 as 5/2 = 2 with a remainder of 1).
 
-```{r, eval=FALSE}
-return_even <- function(x){
+```{r, eval=T}
+return_even = function(x){
   if (x %% 2 == 0) {
     return("I'm an even number!")
   }
 }
 
-x <- 4
-return_even()
+X = 4
+return_even( X )
 ```
 
 EXPLAIN THE ISSUE HERE
+
+_The function call "return_even" need an argument, provided x as argument._
 
 \newpage
 
@@ -48,17 +55,21 @@ R functions are not able to access global variables unless we provide them as in
 Below is a function that determines if a number is odd and adds 1 to that number. The function ought to return that value, but we can't seem to access the value. Debug the code and explain why this error is occurring. Does it make sense to try and call odd_add_1 after running the function? 
 
 ```{r, eval=FALSE}
-return_odd <- function(y){
+return_odd = function(y){
   if (y %% 2 != 0) {
-    odd_add_1 <- y + 1
+    odd_add_1 = y + 1
   }
 }
 
-return_odd(3)
+
+odd_add_1 = return_odd(3)
 odd_add_1
+
 ```
 
 EXPLAIN THE ISSUE HERE
+
+_Need to save the return value of the function into the variable odd_add_1 before being able to read its value_
 
 \newpage
 
@@ -76,12 +87,12 @@ Below is a function `bmi_imperial()` that calculates BMI and assumes the weight 
 df_colorado <- read_csv("data/colorado_data.csv")
 
 bmi_imperial <- function(height, weight){
-  bmi = (703 * weight)/(height * 12)^2
-  return(bmi)
+  return ( (703 * weight)/(height * 12)^2 )
 }
 
 # calculate bmi for the first observation
 bmi_imperial(df_colorado$height[1], df_colorado$weight[1])
+#bmi_imperial(df_colorado$height,    df_colorado$weight   )
 ```
 
 Write a function called `bmi_metric()` that calculates BMI based on the metric system. You can test your function with the Taiwan data set excel file in the data folder, which has height in cm and weight in kg.
@@ -89,8 +100,19 @@ Write a function called `bmi_metric()` that calculates BMI based on the metric s
 ```{r}
 # your code here
 
+df_taiwan = read_xlsx("data/taiwan_data.xlsx")
+
+# bloody height given in cm, need to convert to m
+bmi_metric = function( height, weight ) {
+  #str( height )
+  return( weight / (height/100)^2 )
+  #bmi = ( weight / (height/100)^2 )
+  #return( bmi )
+}
+
 # uncomment the line below to test the bmi calculation on the first row
-#bmi_metric(df_taiwan$height[1], df_taiwan$weight[1])
+bmi_metric(df_taiwan$height[1], df_taiwan$weight[1])
+#bmi_metric(df_taiwan$height,    df_taiwan$weight   )
 ```
 
 \newpage
@@ -102,9 +124,79 @@ Can you write a function called `calculate_bmi()` that combines both of the BMI 
 ```{r}
 # your code here
 
+# going to assume that any height less than 9 is in ft.inches
+# otherwise would be in cm
+
+# when used with mutate, R give this a whole vector
+# not element-wise with value from each cell
+# thus if-statment cannot be used
+# need a vector ready if_else
+# and dont use a RETURN clause with if_else!
+# Avoid R-base ifelse(), it is less strict and may compute incorrect/unexpected result. 
+
+# this version works, vectorization is ok.  
+calculate_bmi = function( height, weight ) {
+  if_else( height >= as.vector(9),  
+    ( bmi_metric(   height,weight ) ),
+    ( bmi_imperial( height,weight ) )
+  )
+}
+```
+
+
+
+```{r, still_dont_work dont_use, include=F}
+
+# scalar-only version 
+# dont work when vector is passed by  df%>% mutate()
+scalar_calculate_bmi = function( height, weight ) {
+  #str( height )
+  if( length(height) > 1 ) {
+      print("vectorized input not handled")
+  }
+  #if( as.numeric(height >= 9 )) {    # this return a list if height is a list...   # need to return via apply()?
+  if( height >= 9 ) {    # if height is a list, it return a list, which return complain is not length 1, which is fine, want this to be scalar comparison only
+    #return( bmi_metric(   height,weight ) )   ## for IF-statement, even NOT using the return still cant handle vector
+    bmi = bmi_metric(   height,weight )
+  } else {
+    #return( bmi_imperial( height,weight ) )
+    bmi = bmi_imperial( height,weight ) 
+  }
+  return( bmi )
+}
+
+
+
+# the problem was that I Have the "return" clause in there.  
+# dont use that, let if_else handles the (serial?) apply of the fn to the (serialized?) height and weight
+subtlyIncorrectVector_calculate_bmi = function( height, weight ) {
+  #str( height )
+  #if( height >= 9 ) {    # 
+  #ifelse( height >= 9,    # this take avg of the vector and compare to single value 9   # or this still result as a single comparision, with single exec of true vs false... not element wise
+  if_else( height >= as.vector(9),  
+    return( bmi_metric(   height,weight ) ),     # having RETURN here is BAD!!
+    return( bmi_imperial( height,weight ) )
+  )
+}
+
+
 # test
-# calculate_bmi(df_colorado$height[1], df_colorado$weight[1])
-# calculate_bmi(df_taiwan$height[1], df_taiwan$weight[1])
+calculate_bmi(df_colorado$height[1], df_colorado$weight[1])
+calculate_bmi(df_colorado$height,    df_colorado$weight   )
+calculate_bmi(df_taiwan$height[1], df_taiwan$weight[1])
+calculate_bmi(df_taiwan$height,    df_taiwan$weight   )
+subtlyIncorrectVector_calculate_bmi( df_taiwan$height,    df_taiwan$weight   )
+
+
+#length(df_colorado$height)
+#df_colorado$height
+
+myMix = c( 5.1, 5.2, 11.1, 11.2 )
+as.numeric(df_colorado$height >= 9 )
+
+as.numeric( myMix >= 9 )
+myMix >= as.vector(9)
+
 ```
 
 \newpage
@@ -114,13 +206,38 @@ Can you write a function called `calculate_bmi()` that combines both of the BMI 
 Use your function `calculate_bmi()` to answer the following questions:
 
 What is the average BMI of the individuals in the Colorado data set? 
-```{r}
+
+_45.61_
+
+```{r vectorization_handled_correctly_now, include=T}
 # your code here
+
+avg_colo = df_colorado %>% 
+  #mutate( bmi = bmi_imperial(height, weight) ) %>%
+  mutate( bmi = calculate_bmi(height, weight) ) %>%   # this works if vectorized if_else() can somehow individually apply T vs F for each list item.
+  summarize( avg = mean(bmi))
+
+avg_colo
 ```
 
+
+
 What is the average BMI of the individuals in the Taiwan data set?
+
+_22.99_
+
 ```{r}
 # your code here
+
+
+avg_taiwan = df_taiwan %>% 
+  #mutate( bmi = bmi_metric(height, weight) ) %>%
+  mutate( bmi = calculate_bmi(height, weight) ) %>%
+  summarize( avg = mean(bmi))
+
+avg_taiwan  # expect 22.99 # are these data real, coloradian are that much fatter than taiwanese?!
+
+
 ```
 
 \newpage
@@ -129,9 +246,48 @@ What is the average BMI of the individuals in the Taiwan data set?
 
 Combine the Colorado and Taiwan data sets into one data frame and calculate the BMI for every row using your `calculate_bmi()` function. Print the first six rows and the last six rows of that new data set.
 
-```{r}
+
+
+```{r vector_version_now_working, include=T }
 # your code here
+
+combo_df = rbind( df_colorado, df_taiwan )
+
+combo_df = combo_df %>% 
+  mutate( bmi = calculate_bmi( height, weight   ) ) 
+
+combo_df %>% head(6)
+combo_df %>% tail(6)
+
+avg_all = combo_df %>%
+  summarize( avg = mean(bmi))
+
+avg_all
+
 ```
+
+
+```{r scalar_version_via_case_when, include=F}
+
+
+combo2_df = rbind( df_colorado, df_taiwan )
+combo2_df = combo2_df %>% 
+  mutate( bmi = 
+            case_when( 
+              #height >= 9 ~ calculate_bmi( height, weight),
+              #height >= 9 ~ bmi_metric( height, weight), # this error too
+              #height >= 9 ~ length(height),   # this doesnt.  height LHS likely a scalar, RHS is the original full vector
+              #height >= 9 ~ str(height),
+              `height` >= 9 ~ "metric",        # this works
+              TRUE        ~ "imperial" 
+            )
+  )
+            
+
+```
+
+
+
 \newpage
 
 ### Question 7
@@ -142,6 +298,26 @@ NOTE: These data are for practice only and are not representative populations, w
 
 ```{r}
 # your code here
+
+gplot7 = ggplot(
+  data = combo_df, 
+  aes( x = location, 
+       y = bmi ) 
+  ) + 
+  geom_boxplot(
+    color = "black",
+    fill = "sienna2"
+  ) +
+  theme_minimal() +
+  labs(
+    title = "BMI of Colorado vs Taiwan",
+    x = "Location",
+    y = ""
+  )
+
+
+gplot7
+
 ```
 
 
@@ -170,6 +346,24 @@ schedule <- read_csv("data/schedule.csv")
 Use a join to find out which patients have no visits on the schedule.
 ```{r}
 # your code here
+
+patients_schedule = left_join( 
+  x = patients , 
+  y = schedule, 
+  by = "patient_id" )
+
+#str(patients)
+#str(patients_schedule)
+
+# look for entries with visit_id as NA
+noSchedule = patients_schedule %>%
+  filter( is.na(visit_id) )
+
+noSchedule %>% head(10)
+
+
+
+
 ```
 
 ### Question 9
@@ -178,9 +372,25 @@ With this data, can you tell if those patients with no visits on the schedule ha
 
 ```{r}
 # your code here? (optional)
+
+
+#patients_schedule_visits = left_join(
+noSchedule_visits = left_join(
+  x = noSchedule,
+  y = visits,
+  by = "visit_id"
+)
+
+str( noSchedule_visits )
+# now look for rows where follow_up is NA or doctor_id is NA
+
+noSchedule_visits %>% head(10)
+
 ```
 
 YOUR ANSWER HERE
+
+_NO, because doctor_id is only avail once a visit has been recorded.
 
 \newpage
 
@@ -190,6 +400,29 @@ Assume those patients need primary care and haven't been assigned a doctor yet. 
 
 ```{r}
 # your code here
+
+doctors_visits = left_join(
+  x = doctors,
+  y = visits,
+  by = "doctor_id"
+)
+
+# str( doctors_visits ) 
+
+
+doc_work_by_rank = doctors_visits %>%
+  group_by( doctor_id ) %>% 
+  summarize( num_visits = length( visit_id )) # %>% 
+
+doc_work_by_rank_with_name = 
+  full_join(
+    x = doctors,
+    y = doc_work_by_rank,
+    by = "doctor_id"
+  ) 
+
+doc_work_by_rank_with_name %>% arrange( num_visits ) %>%  head( 8 )  
+
 ```
 
 
@@ -219,6 +452,12 @@ Note: If you are using if_else (hint hint) and checking by the year, you will li
 
 We have also provided you a function that you can use within your formattable table to reference this indicator variable to help reduce the code. However, you do not have to use this, and feel free to change the hex colors. 
 
+
+_The formattable renders correctly in HTML, just not PDF_
+_The knitted HTML is accessible at:_ 
+[https://tin6150.github.io/psg/R_phw251_bonus_problem_set.html](https://tin6150.github.io/psg/R_phw251_bonus_problem_set.html)
+
+
 ```{r, echo=F}
 knitr::include_graphics('data/table_1.png')
 ```
@@ -226,16 +465,75 @@ knitr::include_graphics('data/table_1.png')
 ```{r}
 # in the event that plotly was run below, detach plotly
 # the option 'style' conflicts when both libraries are loaded
-#detach("package:plotly", unload=TRUE)
+#/ detach("package:plotly", unload=TRUE)
 
 # your code here
+
+#str( bll_nyc_per_1000 )
+
+bll_wide = bll_nyc_per_1000 %>% pivot_wider(
+  names_from = "time_period",
+  values_from = "bll_5plus_1k"
+)
+
+
 
 # function that returns red if indicator == 1, green otherwise
 up_down = function(indicator) {
   return(ifelse( indicator == 1, "#fd626e", "#03d584"))
 }
 
+# function overloading works in R too :)
+# x and y could be vectors, it will do element wise comparison, and return a vector
+up_down = function(x, y) {
+  return(ifelse( x <= y, "#fd626e", "#03d584"))
+}
+
+# careful using this fn, need to explicitly pass a vector of data
+styler = function(x,y) {
+  return( formatter( "span", style = ~style( color = up_down(x,y))))
+}
+
 # your `formattable code` here
+# the code works in Rstudio, but don't knit correctly to pdf output 
+
+table_4_html_not_pdf = formattable( 
+  bll_wide,
+  list( 
+    `2014` = styler(bll_wide$`2013`, bll_wide$`2014`),   
+    `2015` = styler(bll_wide$`2014`, bll_wide$`2015`),   
+    `2016` = styler(bll_wide$`2015`, bll_wide$`2016`)
+    #`2016` = styler("2015","2016")  # this dont work correctly, bad coloring
+    #`2016` = styler(`2015`,`2016`)  # `2015` is a string?, not a vector the styler fn can grab data from
+    )
+)
+table_4_html_not_pdf
+
+# this one works, orig code, just repetitive and not fully utilizaing fn
+old_table_4_html_not_pdf = formattable( 
+  bll_wide,
+  list( 
+    `2014` = formatter( "span", style = ~style( color = up_down(`2013`,`2014`) ) ),   
+    `2015` = formatter( "span", style = ~style( color = up_down(`2014`,`2015`) ) ),   
+    `2016` = formatter( "span", style = ~style( color = up_down(`2015`,`2016`) ) )
+    )
+)
+
+
+```
+
+```{r, old_code, include=F}
+
+this_fn_dont_pass_data_col_correctly = formattable( 
+  bll_wide,
+  list( 
+    `2014` = styler("2013","2014"),    # this generate a table, but lost color
+    `2015` = styler("2014","2015"),   
+    `2016` = styler("2015","2016")
+    )
+)
+
+
 
 ```
 \newpage
@@ -249,8 +547,26 @@ knitr::include_graphics('data/table_2.png')
 ```
 
 
+_The datatable renders correctly in HTML, just not PDF_
+_The knitted HTML is accessible at:_ 
+[https://tin6150.github.io/psg/R_phw251_bonus_problem_set.html](https://tin6150.github.io/psg/R_phw251_bonus_problem_set.html)
+
+
 ```{r}
 # your code here
+
+bll_renamed = bll_nyc_per_1000 %>%
+  rename(
+    `Borough` = borough_id,
+    `Year`    = time_period,
+    `BLL > 5` = bll_5plus_1k
+  )
+
+datatable( 
+  bll_renamed,
+  caption = "New York City: Elevated Blood Lead Levels 2013-2016 by Borough",
+  rownames = F
+)
 ```
 
 \newpage
@@ -267,7 +583,14 @@ Replicate the graph below using plotly.
 knitr::include_graphics('data/rate_graph.png')
 ```
 
-```{r, include=F}
+
+
+_The plot_ly graph renders correctly in HTML, just not PDF_
+_The knitted HTML is accessible at:_ 
+[https://tin6150.github.io/psg/R_phw251_bonus_problem_set.html](https://tin6150.github.io/psg/R_phw251_bonus_problem_set.html)
+
+
+```{r, include=T}
 # issues with formattable and plotly together since the "style" option overlap
 # https://stackoverflow.com/questions/39319427/using-formattable-and-plotly-simultaneously
 #detach("package:formattable", unload=TRUE)
@@ -276,6 +599,35 @@ library(plotly)
 df_suicide <- read_csv("data/Suicide Mortality by State.csv")
 
 # your code here
+
+
+top_suicide = df_suicide %>%
+  group_by(STATE) %>%
+  summarize( total = sum( DEATHS ),
+             RATE ) %>%
+  arrange( total )
+
+# not sure of state selection criteria used, so pick by hand
+state_list = c( 'AZ', 'CA', 'FL', 'HI', 'MI', 'NY', 'WY' )
+
+df_suicide_select = df_suicide %>%
+  filter( STATE %in% state_list )
+
+fig_q13 = plot_ly( df_suicide_select ) %>%
+  add_trace( 
+    x = ~YEAR,
+    y = ~RATE,
+    #type = "bar"
+    type = "scatter"
+    , color = ~STATE
+    #,     mode = "lines+markers" 
+    ,     mode = "lines"   
+    , line = list( dash = "dash")  # https://plotly.com/r/line-charts/
+    )
+
+
+
+fig_q13
 ```
 
 \newpage
@@ -300,7 +652,7 @@ knitr::include_graphics('data/challenge_choropleth.png')
 ```
 
 Here is the shell of the map to get you started. Copy the plotly code into the chunk below this one and customize it.
-```{r message=FALSE, warning=FALSE}
+```{r message=FALSE, warning=FALSE, include=F}
 # data pulled from CDC website described above 
 df_suicide <- read_csv("data/Suicide Mortality by State.csv") %>%
   filter(YEAR == 2018)
@@ -311,10 +663,73 @@ plot_ly(df_suicide,
   layout(geo=list(scope="usa")) 
 ```
 
-```{r}
+
+
+
+_The plot_ly map renders correctly in HTML, just not PDF_
+_The knitted HTML is accessible at:_ 
+[https://tin6150.github.io/psg/R_phw251_bonus_problem_set.html](https://tin6150.github.io/psg/R_phw251_bonus_problem_set.html)
+
+
+```{r gis_choropleth, include=T}
 # your code here
+
+
+# data pulled from CDC website described above 
+df_suicide <- read_csv("data/Suicide Mortality by State.csv") %>%
+  filter(YEAR == 2018)
+
+## add hover pop up text as extra col of data to DF
+df_suicide$hover = with(
+  df_suicide,
+  paste( NAME, '<br>',
+         'Death Rate: ', RATE,    '<br>',
+         'Death: '     , DEATHS,  '<br>'
+         ) 
+)
+
+map_q14 = plot_ly(df_suicide,
+        type="choropleth",
+        locationmode = "USA-states") %>%
+  layout(geo=list(scope="usa"))   %>% add_trace(
+    z            = ~RATE
+    , text       = ~hover
+    , locations  = ~STATE
+    , color      = ~RATE
+    , colors     = 'Purples'
+  )  %>%   
+  layout(      
+    title = paste(
+      "Suicide Mortality by State in 2018"
+      , "<br> The number of deaths per 100,000 total population"
+) )
+
+
+map_q14 # map renders well in Rstudio, but not to pdf.
+
 ```
 
 
 
+```{r, plotly_web_cholopleth_eg, include=F }
 
+# ref example from plotly web site 
+# https://plotly.com/r/choropleth-maps/
+
+df <- read.csv("https://raw.githubusercontent.com/plotly/datasets/master/2011_us_ag_exports.csv")
+df$hover <- with(df, paste(state, '<br>', "Beef", beef, "Dairy", dairy, "<br>",
+                           "Fruits", total.fruits, "Veggies", total.veggies,
+                           "<br>", "Wheat", wheat, "Corn", corn))
+
+fig <- plot_geo(df, locationmode = 'USA-states')
+fig <- fig %>% add_trace(
+    z = ~total.exports, text = ~hover, locations = ~code,
+    color = ~total.exports, colors = 'Purples'
+  )
+fig <- fig %>% colorbar(title = "Millions USD")
+fig <- fig %>% layout(
+    title = '2011 US Agriculture Exports by State<br>(Hover for breakdown)'
+  )
+
+fig
+```

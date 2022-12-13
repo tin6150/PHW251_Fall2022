@@ -15,7 +15,8 @@ filepath <- "https://data.chhs.ca.gov/dataset/4de76cd0-0ac9-4260-8ac3-0637acb444
 std <- read_csv(filepath) %>%
   rename_with(~ tolower(gsub(" ","_",.x,fixed=TRUE))) 
 
-
+##Sn50
+head(std)
 ```
 
 ## kable
@@ -30,10 +31,12 @@ std_sf_m <- std %>%
   mutate(year=as.character(year)) %>%
   data.frame()
 
+head(std_sf_m)
+
 # #format
-# kable(std_sf_m, format="pipe")
-# kable(std_sf_m, format="simple")
-# kable(std_sf_m, format="latex")
+kable(std_sf_m, format="pipe")
+#kable(std_sf_m, format="simple")
+#kable(std_sf_m, format="latex")
 # 
 # kable(std_sf_m,booktabs=T)
 # 
@@ -42,7 +45,7 @@ std_sf_m <- std %>%
 # kable(std_sf_m,booktabs=T, digits=c(0,1,0,1))
 # 
 # #using a single value
-# kable(std_sf_m,booktabs=T, digits=0)
+kable(std_sf_m,booktabs=T, digits=0)
 # 
 # #row names
 # kable(std_sf_m,booktabs=T, row.names=T)
@@ -54,18 +57,26 @@ std_sf_m <- std %>%
 # names(std_sf_m)
 # 
 # #align
-# kable(std_sf_m,booktabs=T, align='lccc')
+# kable(std_sf_m,booktabs=T, align='lccr')
 # 
 # #caption
-# kable(std_sf_m,booktabs=T, caption="STD Rates among males in San Francisco, 2013-2018")
+kable(std_sf_m,booktabs=T, caption="STD Rates among males in San Francisco, 2013-2018")
 # 
 # #format args
-# kable(std_sf_m,booktabs=T,format.args=list(big.mark=","))
+kable(std_sf_m,booktabs=T,format.args=list(big.mark=","))
 
 #final table
 kable(std_sf_m, booktabs=T, col.names=str_to_title(gsub("[.]"," ",names(std_sf_m))), align='lccc', caption="STD Rates among males in San Francisco, 2013-2018",format.args=list(big.mark=","))
 
 
+```
+
+# sn50
+
+```{r}
+# still not sure what kind of contingency table is build...
+# table(std$county)
+#XX table(std_sf_m$year)
 ```
 
 ## kableExtra
